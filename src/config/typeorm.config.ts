@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
 //quitar el example del env
+//ignorar el docker-compose.yml si usa postgres local
 export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
   type: 'postgres',
   host: configService.get('DB_HOST'),
