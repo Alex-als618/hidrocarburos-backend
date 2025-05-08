@@ -1,22 +1,31 @@
 import { Entity,
-    PrimaryGeneratedColumn,
-    Column
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index
 } from 'typeorm';
+import { FuelAvailability } from '../../fuel-availabilities/entities/fuel-availability.entity';
 
 @Entity('fuel_types')
+@Index('idx_unique_fuel_name', ['fuel_name'], { unique: true })
 export class FuelType {
-  @PrimaryGeneratedColumn()
-  id_fuel_type: number;
+  @PrimaryGeneratedColumn({ name: 'id_fuel_type' })
+  idFuelType: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true, })
-  fuel_name: string;
+  @Column({ type: 'varchar', length: 50, unique: true, name: 'fuel_name' })
+  fuelName: string;
 
   @Column({ type: 'varchar', length: 255 })
   description: string;
 
-  @Column({ type: 'timestamp' })
-  created_at: Date;
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  createdAt: Date;
 
-  @Column({ type: 'timestamp' })
-  updated_at: Date;
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  updatedAt: Date;
+
+  @OneToMany(() => FuelAvailability, fa => fa.fuelType)
+  fuelAvailabilities: FuelAvailability[];
 }

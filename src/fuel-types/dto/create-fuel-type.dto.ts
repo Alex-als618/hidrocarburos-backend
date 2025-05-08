@@ -1,1 +1,3 @@
-export class CreateFuelTypeDto {}
+export class CreateFuelTypeDto{
+    
+}

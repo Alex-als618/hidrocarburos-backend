@@ -1,15 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { CreateFuelStationDto } from './dto/create-fuel-station.dto';
 import { UpdateFuelStationDto } from './dto/update-fuel-station.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FuelStation } from './entities/fuel-station.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class FuelStationsService {
-  create(createFuelStationDto: CreateFuelStationDto) {
-    return 'This action adds a new fuelStation';
+  constructor(
+    @InjectRepository(FuelStation)
+    private readonly stationRepository: Repository<FuelStation>,
+  ) {}
+
+  async create(dto: CreateFuelStationDto){
+    const station = this.stationRepository.create(dto);
+    return await this.stationRepository.save(station);
   }
 
-  findAll() {
-    return `This action returns all fuelStations`;
+  async findAll(){
+    return this.stationRepository.find();
   }
 
   findOne(id: number) {
