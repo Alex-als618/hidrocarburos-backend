@@ -6,24 +6,31 @@ import {
   JoinColumn,
   Index,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { FuelStation } from '../../fuel-stations/entities/fuel-station.entity';
 import { FuelType } from '../../fuel-types/entities/fuel-type.entity';
 
-@Index('idx_fuel_station_fuel_type', ['id_fuel_station', 'id_fuel_type'], { unique: true })
+@Index('idx_fuel_station_fuel_type', ['idFuelStation', 'idFuelType'], {
+  unique: true,
+})
 @Entity('fuel_availability')
 export class FuelAvailability {
   @PrimaryGeneratedColumn({ name: 'id_fuel_availability' })
   idFuelAvailability: number;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'available_quantity' })
+  @Column({
+    name: 'available_quantity',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+  })
   availableQuantity: number;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
   @Column({ name: 'id_fuel_station' })
@@ -32,11 +39,11 @@ export class FuelAvailability {
   @Column({ name: 'id_fuel_type' })
   idFuelType: number;
 
-  @ManyToOne(() => FuelStation, fs => fs.fuelAvailabilities)
+  @ManyToOne(() => FuelStation, (fs) => fs.fuelAvailabilities)
   @JoinColumn({ name: 'id_fuel_station' })
   fuelStation: FuelStation;
 
-  @ManyToOne(() => FuelType, ft => ft.fuelAvailabilities)
+  @ManyToOne(() => FuelType, (ft) => ft.fuelAvailabilities)
   @JoinColumn({ name: 'id_fuel_type' })
   fuelType: FuelType;
-}  
+}

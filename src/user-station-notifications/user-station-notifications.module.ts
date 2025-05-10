@@ -6,6 +6,7 @@ import { UserStationNotification } from './entities/user-station-notification.en
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserStationNotification])],
+  exports: [UserStationNotificationsService],
   controllers: [UserStationNotificationsController],
   providers: [UserStationNotificationsService],
 })

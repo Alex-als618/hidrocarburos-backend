@@ -6,6 +6,7 @@ import { FuelType } from './entities/fuel-type.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FuelType])],
+  exports: [FuelTypesService],
   controllers: [FuelTypesController],
   providers: [FuelTypesService],
 })

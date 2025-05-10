@@ -10,24 +10,26 @@ export class FuelAvailabilitiesService {
   constructor(
     @InjectRepository(FuelAvailability)
     private readonly fuelAvailabilityRepository: Repository<FuelAvailability>,
-  ){}
+  ) {}
 
-  async create(dto: CreateFuelAvailabilityDto){
-    const availability = this.fuelAvailabilityRepository.create(dto);
-    return await this.fuelAvailabilityRepository.save(availability);
+  async create(dto: CreateFuelAvailabilityDto) {
+    //const availability = this.fuelAvailabilityRepository.create(dto);
+    return /*await this.fuelAvailabilityRepository.save(availability)*/ 'prueba create';
   }
 
-  async findAll(){
-    return this.fuelAvailabilityRepository.find({
+  async findAll() {
+    return;
+    /*this.fuelAvailabilityRepository.find({
       relations: ['fuelStation', 'fuelType'],
-    });
+    })*/ ('prueba findAll');
   }
 
-  async findOne(id: number){
-    return this.fuelAvailabilityRepository.findOne({
+  async findOne(id: number) {
+    return;
+    /*this.fuelAvailabilityRepository.findOne({
       where: { idFuelAvailability: id },
       relations: ['fuelStation', 'fuelType'],
-    });
+    })*/ `prueba findOne ${id}`;
   }
 
   update(id: number, updateFuelAvailabilityDto: UpdateFuelAvailabilityDto) {

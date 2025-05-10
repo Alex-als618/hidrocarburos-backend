@@ -12,13 +12,13 @@ export class FuelStationsService {
     private readonly stationRepository: Repository<FuelStation>,
   ) {}
 
-  async create(dto: CreateFuelStationDto){
-    const station = this.stationRepository.create(dto);
-    return await this.stationRepository.save(station);
+  async create(dto: CreateFuelStationDto) {
+    //const station = this.stationRepository.create(dto);
+    return /*await this.stationRepository.save(station)*/ 'prueba create';
   }
 
-  async findAll(){
-    return this.stationRepository.find();
+  async findAll() {
+    return /*this.stationRepository.find()*/ 'prueba findAll';
   }
 
   findOne(id: number) {

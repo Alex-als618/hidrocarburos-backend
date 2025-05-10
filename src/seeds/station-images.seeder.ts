@@ -1,30 +1,32 @@
-// src/seeders/station-images.seeder.ts
-import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
 import { StationImage } from '../station-images/entities/station-image.entity';
 import { FuelStation } from '../fuel-stations/entities/fuel-station.entity';
 
-export const seedStationImages = async () => {
-  const dataSource = await AppDataSource.initialize();
-  const repo = dataSource.getRepository(StationImage);
-  const fuelStationRepo = dataSource.getRepository(FuelStation);
+export const seedStationImages = async (dataSource: DataSource) => {
+  const stationImageRepository = dataSource.getRepository(StationImage);
+  const fuelStationRepository = dataSource.getRepository(FuelStation);
 
-  const station1 = await fuelStationRepo.findOneBy({ name: 'Estación 1' });
+  const fuelStation = await fuelStationRepository.findOne({
+    where: { name: 'Estación Central' },
+  });
 
-  const images = [
-    { fuel_station: station1, image_url: 'http://example.com/image1.jpg' },
-    { fuel_station: station1, image_url: 'http://example.com/image2.jpg' },
-  ];
-
-  for (const imageData of images) {
-    const exists = await repo.findOne({
-      where: { fuelStation: imageData.fuel_station, image_url: imageData.image_url },
-    });
-    if (!exists) {
-      const stationImage = repo.create(imageData);
-      await repo.save(stationImage);
-    }
+  if (!fuelStation) {
+    throw new Error('❌ No se encontro la estación necesaria');
   }
 
-  console.log('✅ Station Images seeded');
-  await dataSource.destroy();
+  const stationImages = [
+    {
+      fuelStation: fuelStation,
+      imageUrl:
+        'https://media.gettyimages.com/id/860126718/es/foto/color-gasoline-diesel-pumps.jpg?s=612x612&w=gi&k=20&c=3UD2OqKihDCJiDLOou-GAVMh5FWxVgP43__YmG7r1mo=',
+    },
+    {
+      fuelStation: fuelStation,
+      imageUrl:
+        'https://media.gettyimages.com/id/1400500695/es/foto/mujer-molesta-reabasteciendo-el-tanque-de-gasolina-en-la-bomba-de-combustible.jpg?s=612x612&w=gi&k=20&c=clPLCn568S6FrhyU5Dmid8hpp5ILIYYpEttIJrDn1o8=',
+    },
+  ];
+
+  await stationImageRepository.save(stationImages);
+  console.log('station-images guardado con éxito');
 };

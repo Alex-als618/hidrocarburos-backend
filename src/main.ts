@@ -2,18 +2,30 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+import { AppDataSource } from './data-source';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
 
   //add
+  //CORS
   app.enableCors({
     origin: ['http://localhost:4200', 'https://tudominio.com'], // permite solo estos orígenes
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  //SEEDER
+  AppDataSource.initialize()
+    .then(() => {
+      console.log('Data Source has been initialized!');
+    })
+    .catch((err) => {
+      console.error('Error during Data Source initialization:', err);
+    });
   //add
-  
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

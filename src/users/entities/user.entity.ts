@@ -7,7 +7,7 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
-  Index
+  Index,
 } from 'typeorm';
 import { Role } from '../../roles/entities/role.entity';
 import { FuelStation } from '../../fuel-stations/entities/fuel-station.entity';
@@ -31,20 +31,20 @@ export class User {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @ManyToOne(() => Role, role => role.users)
+  @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: 'id_role' })
   role: Role;
 
-  @ManyToOne(() => FuelStation, fs => fs.users, { nullable: true })
+  @ManyToOne(() => FuelStation, (fs) => fs.users, { nullable: true })
   @JoinColumn({ name: 'id_fuel_station' })
   fuelStation: FuelStation;
 
-  @OneToMany(() => UserStationNotification, usn => usn.user)
+  @OneToMany(() => UserStationNotification, (usn) => usn.user)
   userStationNotifications: UserStationNotification[];
-}  
+}

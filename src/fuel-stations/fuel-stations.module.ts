@@ -6,6 +6,7 @@ import { FuelStation } from './entities/fuel-station.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FuelStation])],
+  exports: [FuelStationsService],
   controllers: [FuelStationsController],
   providers: [FuelStationsService],
 })

@@ -1,10 +1,10 @@
-import { 
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    OneToMany,
-    CreateDateColumn,
-    UpdateDateColumn
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { FuelAvailability } from '../../fuel-availabilities/entities/fuel-availability.entity';
 import { User } from '../../users/entities/user.entity';
@@ -25,27 +25,27 @@ export class FuelStation {
   @Column({ type: 'varchar', length: 255 })
   address: string;
 
-  @Column({ type: 'numeric', precision: 9, scale: 6, name: 'gps_latitude' })
+  @Column({ name: 'gps_latitude', type: 'numeric', precision: 9, scale: 6 })
   gpsLatitude: number;
 
-  @Column({ type: 'numeric', precision: 9, scale: 6, name: 'gps_longitude' })
+  @Column({ name: 'gps_longitude', type: 'numeric', precision: 9, scale: 6 })
   gpsLongitude: number;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @OneToMany(() => FuelAvailability, fa => fa.fuelStation)
+  @OneToMany(() => FuelAvailability, (fa) => fa.fuelStation)
   fuelAvailabilities: FuelAvailability[];
 
-  @OneToMany(() => User, user => user.fuelStation)
+  @OneToMany(() => User, (user) => user.fuelStation)
   users: User[];
 
-  @OneToMany(() => UserStationNotification, usn => usn.fuelStation)
+  @OneToMany(() => UserStationNotification, (usn) => usn.fuelStation)
   userStationNotifications: UserStationNotification[];
 
-  @OneToMany(() => StationImage, stnimg => stnimg.fuelStation)
+  @OneToMany(() => StationImage, (stnimg) => stnimg.fuelStation)
   stationImages: StationImage[];
 }

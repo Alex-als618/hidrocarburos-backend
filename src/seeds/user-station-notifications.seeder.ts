@@ -1,28 +1,35 @@
 // src/seeders/user-station-notifications.seeder.ts
-import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
 import { UserStationNotification } from '../user-station-notifications/entities/user-station-notification.entity';
 import { User } from '../users/entities/user.entity';
 import { FuelStation } from '../fuel-stations/entities/fuel-station.entity';
 
-export const seedUserStationNotifications = async () => {
-  const dataSource = await AppDataSource.initialize();
-  const repo = dataSource.getRepository(UserStationNotification);
-  const userRepo = dataSource.getRepository(User);
-  const fuelStationRepo = dataSource.getRepository(FuelStation);
+export const seedUserStationNotifications = async (dataSource: DataSource) => {
+  const userStationNotificationRepository = dataSource.getRepository(
+    UserStationNotification,
+  );
+  const userRepository = dataSource.getRepository(User);
+  const fuelStationRepository = dataSource.getRepository(FuelStation);
 
-  const user1 = await userRepo.findOneBy({ email: 'user1@example.com' });
-  const station1 = await fuelStationRepo.findOneBy({ name: 'Estación 1' });
-
-  const notification = { user: user1, fuel_station: station1, active: true };
-
-  const exists = await repo.findOne({
-    where: { user: notification.user, fuel_station: notification.fuel_station },
+  const user = await userRepository.findOne({
+    where: { email: 'user@example.com' },
   });
-  if (!exists) {
-    const userNotification = repo.create(notification);
-    await repo.save(userNotification);
+  const fuelStation = await fuelStationRepository.findOne({
+    where: { name: 'Estación Ejemplo' },
+  });
+
+  if (!user || !fuelStation) {
+    throw new Error('❌ No se encontro el usuario o estación necesaria');
   }
 
-  console.log('✅ User Station Notifications seeded');
-  await dataSource.destroy();
+  const notifications = [
+    {
+      user: user,
+      fuelStation: fuelStation,
+      subscribed: true,
+    },
+  ];
+
+  await userStationNotificationRepository.save(notifications);
+  console.log('user-station-notifications guardado con éxito');
 };

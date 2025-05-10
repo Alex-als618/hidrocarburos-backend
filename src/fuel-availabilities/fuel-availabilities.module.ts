@@ -6,7 +6,8 @@ import { FuelAvailability } from './entities/fuel-availability.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FuelAvailability])],
+  exports: [FuelAvailabilitiesService],
   controllers: [FuelAvailabilitiesController],
-  providers: [FuelAvailabilitiesService]
+  providers: [FuelAvailabilitiesService],
 })
 export class FuelAvailabilitiesModule {}

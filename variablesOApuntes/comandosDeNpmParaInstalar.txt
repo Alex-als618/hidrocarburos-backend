@@ -1,0 +1,121 @@
+**\***@nestjs/platform-express npm install @nestjs/platform-express Adaptador que permite usar Express como backend HTTP para Nest.
+**\***class-validator npm install class-validator Para validar DTOs con decoradores (@IsString, @IsEmail, etc.).
+**\***class-transformer npm install class-transformer Transforma datos a clases (por ejemplo, JSON a DTOs).
+**\***dotenv npm install dotenv Permite leer variables desde un archivo .env (útil para la configuración).
+
+**\***ts-node npm install -D ts-node Ejecuta archivos TypeScript directamente (útil para seeders).
+**\***typescript npm install -D typescript Lenguaje que usa NestJS.
+**\***@types/node npm install -D @types/node Tipos de Node.js para TypeScript.
+**\***tsconfig-paths npm install -D tsconfig-paths Soporta alias de rutas en TypeScript (@app/, etc.).
+
+**\***SEEDERS
+En tu package.json, agrega este script para usar seeder:
+"scripts": {
+"seed": "ts-node src/seeds/seeder.ts",
+}
+
+npm run seed = para carga los seeder
+
+**\***CORS
+npm install @types/cors --save-dev
+
+const corsOptions: CorsOptions = {
+origin: (origin, callback) => {
+const allowedOrigins = ['http://localhost:3000', 'https://example.com'];
+if (!origin || allowedOrigins.includes(origin)) {
+callback(null, true);
+} else {
+callback(new Error('No permitido por CORS'));
+}
+},
+credentials: true,
+};
+
+app.enableCors(corsOptions);
+
+**\***Configurar Linting y formateo con ESLint y Prettier
+npm install --save-dev eslint prettier eslint-config-prettier eslint-plugin-prettier
+
+en el archivo .eslintrc.js pon lo siguiente y si no hay ese archivo crea uno que contenga lo siguiente(en la raiz junto con el README.md o tsconfig.json o tsconfig.build.json):
+module.exports = {
+parser: '@typescript-eslint/parser',
+parserOptions: {
+project: 'tsconfig.json',
+sourceType: 'module',
+},
+plugins: ['@typescript-eslint', 'prettier'],
+extends: [
+'plugin:@typescript-eslint/recommended',
+'plugin:prettier/recommended', // Habilita prettier como plugin de ESLint
+],
+root: true,
+env: {
+node: true,
+},
+rules: {
+'prettier/prettier': 'error', // Lanza errores si Prettier falla
+'@typescript-eslint/interface-name-prefix': 'off',
+'@typescript-eslint/explicit-function-return-type': 'off',
+'@typescript-eslint/no-explicit-any': 'off',
+},
+};
+
+en el archivo .prettierrc pon lo siguiente y si no hay ese archivo crea uno que contenga lo siguiente(en la raiz junto con el README.md o tsconfig.json o tsconfig.build.json):
+{
+"singleQuote": true,
+"trailingComma": "all",
+"printWidth": 80,
+"tabWidth": 2,
+"semi": true
+}
+
+En tu package.json, agrega estos scripts para facilitar el uso:
+"scripts": {
+"lint": "eslint . --ext .ts",
+"lint:fix": "eslint . --ext .ts --fix",
+"format": "prettier --write \"src/\*_/_.ts\""
+}
+Si tienes alguno omitele y solo pon el que no tienes
+
+\*SOLO PARA VSCode (opcional pero recomendado)
+-Instala estas extensiones:
++ESLint (dbaeumer.vscode-eslint)
++Prettier - Code formatter (esbenp.prettier-vscode)
+
+en el archivo settings.json que esta en la carpeta .vscode pon lo siguiente y si no hay ese archivo crea uno .vscode/settings.json que contenga lo siguiente(en la raiz junto con el README.md o tsconfig.json o tsconfig.build.json):
+{
+"editor.formatOnSave": true,
+"editor.defaultFormatter": "esbenp.prettier-vscode",
+"eslint.format.enable": true,
+"eslint.validate": ["typescript"]
+}
+
+Una vez echo ejecuta los siguientes:
+-npm run lint:fix
+-npm run format
+
+cambiar:
+/*
+export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
+  type: 'postgres',
+  host: configService.get('DB_HOST'),
+  port: +configService.get('DB_PORT'),
+  username: configService.get('DB_USER'),
+  password: configService.get('DB_PASS'),
+  database: configService.get('DB_NAME'),*/
+  //entities: [join(__dirname + '../../**/*.entity{.ts,.js}')],
+  //synchronize: true,
+//});
+por:
+/*
+export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
+  type: 'postgres',
+  host: configService.get<string>('DB_HOST'),
+  port: configService.get<number>('DB_PORT'),
+  username: configService.get<string>('DB_USER'),
+  password: configService.get<string>('DB_PASS'),
+  database: configService.get<string>('DB_NAME'),*/
+  //entities: [join(__dirname + '../../**/*.entity{.ts,.js}')],
+  //synchronize: true,
+//});
+

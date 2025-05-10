@@ -6,6 +6,7 @@ import { StationImage } from './entities/station-image.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([StationImage])],
+  exports: [StationImagesService],
   controllers: [StationImagesController],
   providers: [StationImagesService],
 })

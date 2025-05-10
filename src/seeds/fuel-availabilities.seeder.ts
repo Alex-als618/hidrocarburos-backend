@@ -1,36 +1,46 @@
-// src/seeders/fuel-availability.seeder.ts
-import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
 import { FuelAvailability } from '../fuel-availabilities/entities/fuel-availability.entity';
 import { FuelStation } from '../fuel-stations/entities/fuel-station.entity';
 import { FuelType } from '../fuel-types/entities/fuel-type.entity';
 
-export const seedFuelAvailability = async () => {
-  const dataSource = await AppDataSource.initialize();
-  const repo = dataSource.getRepository(FuelAvailability);
-  const fuelStationRepo = dataSource.getRepository(FuelStation);
-  const fuelTypeRepo = dataSource.getRepository(FuelType);
+export const seedFuelAvailability = async (dataSource: DataSource) => {
+  const fuelAvailabilityRepository = dataSource.getRepository(FuelAvailability);
+  const fuelStationsRepository = dataSource.getRepository(FuelStation);
+  const fuelTypeRepository = dataSource.getRepository(FuelType);
 
-  const station1 = await fuelStationRepo.findOneBy({ name: 'Estación 1' });
-  const station2 = await fuelStationRepo.findOneBy({ name: 'Estación 2' });
+  const fuelStation1 = await fuelStationsRepository.findOne({
+    where: { name: 'Estación Ejemplo' },
+  });
+  const fuelStation2 = await fuelStationsRepository.findOne({
+    where: { name: 'Estación Central' },
+  });
 
-  const fuelTypeGasolina = await fuelTypeRepo.findOneBy({ fuelName: 'Gasolina' });
-  const fuelTypeDiesel = await fuelTypeRepo.findOneBy({ fuelName: 'Diésel' });
+  const fuelTypeGasolina = await fuelTypeRepository.findOne({
+    where: { fuelName: 'Gasolina Regular' },
+  });
+  const fuelTypeDiesel = await fuelTypeRepository.findOne({
+    where: { fuelName: 'Diésel' },
+  });
 
-  const availability = [
-    { fuelStation: station1, fuelType: fuelTypeGasolina, availableQuantity: 100 },
-    { fuelStation: station2, fuelType: fuelTypeDiesel, availableQuantity: 50 },
-  ];
-
-  for (const availabilityData of availability) {
-    const exists = await repo.findOne({
-      where: { fuelStation: availabilityData.fuelStation, fuelType: availabilityData.fuelType },
-    });
-    if (!exists) {
-      const fuelAvail = repo.create(availabilityData);
-      await repo.save(fuelAvail);
-    }
+  if (!fuelStation1 || !fuelStation2 || !fuelTypeGasolina || !fuelTypeDiesel) {
+    throw new Error(
+      '❌ No se encontraron todas las estaciones o tipos de combustible necesarios',
+    );
   }
 
-  console.log('✅ Fuel Availability seeded');
-  await dataSource.destroy();
+  const fuelAvailabilities = [
+    {
+      availableQuantity: 100,
+      fuelStation: fuelStation1,
+      fuelType: fuelTypeGasolina,
+    },
+    {
+      availableQuantity: 50,
+      fuelStation: fuelStation2,
+      fuelType: fuelTypeDiesel,
+    },
+  ];
+
+  await fuelAvailabilityRepository.save(fuelAvailabilities);
+  console.log('fuel-availabilities guardado con éxito');
 };

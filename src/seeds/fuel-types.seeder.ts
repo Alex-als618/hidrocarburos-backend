@@ -1,21 +1,27 @@
-// src/seeders/fuel-types.seeder.ts
-import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
 import { FuelType } from '../fuel-types/entities/fuel-type.entity';
 
-export const seedFuelTypes = async () => {
-  const dataSource = await AppDataSource.initialize();
-  const repo = dataSource.getRepository(FuelType);
+export const seedFuelTypes = async (dataSource: DataSource) => {
+  const fuelTypeRepository = dataSource.getRepository(FuelType);
 
-  const fuelTypes = ['Gasolina', 'Diésel', 'Gas Natural'];
+  const fuelTypes = [
+    {
+      fuelName: 'Gasolina Regular',
+      description:
+        'Combustible de 87 octanos, comúnmente utilizado en vehículos de uso diario.',
+    },
+    {
+      fuelName: 'Diésel',
+      description:
+        'Combustible utilizado principalmente en camiones, autobuses y maquinaria pesada.',
+    },
+    {
+      fuelName: 'Gasolina Premium',
+      description:
+        'Combustible de alto octanaje (92+), ideal para motores de alto rendimiento.',
+    },
+  ];
 
-  for (const fuelTypeName of fuelTypes) {
-    const exists = await repo.findOneBy({ fuelName: fuelTypeName });
-    if (!exists) {
-      const fuelType = repo.create({ fuelName: fuelTypeName });
-      await repo.save(fuelType);
-    }
-  }
-
-  console.log('✅ Fuel Types seeded');
-  await dataSource.destroy();
+  await fuelTypeRepository.save(fuelTypes);
+  console.log('fuel-types guardado con éxito');
 };

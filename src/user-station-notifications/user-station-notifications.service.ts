@@ -16,7 +16,10 @@ export class UserStationNotificationsService {
     return `This action returns a #${id} userStationNotification`;
   }
 
-  update(id: number, updateUserStationNotificationDto: UpdateUserStationNotificationDto) {
+  update(
+    id: number,
+    updateUserStationNotificationDto: UpdateUserStationNotificationDto,
+  ) {
     return `This action updates a #${id} userStationNotification`;
   }
 

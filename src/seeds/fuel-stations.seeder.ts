@@ -1,25 +1,33 @@
-// src/seeders/fuel-stations.seeder.ts
-import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
 import { FuelStation } from '../fuel-stations/entities/fuel-station.entity';
 
-export const seedFuelStations = async () => {
-  const dataSource = await AppDataSource.initialize();
-  const repo = dataSource.getRepository(FuelStation);
+export const seedFuelStations = async (dataSource: DataSource) => {
+  const fuelStationsRepository = dataSource.getRepository(FuelStation);
 
-  const stations = [
-    { name: 'Estación 1', location: 'Calle Ficticia 123' },
-    { name: 'Estación 2', location: 'Avenida Real 456' },
-    { name: 'Estación 3', location: 'Ruta 10' },
+  const fuelStations = [
+    {
+      name: 'Estación Ejemplo',
+      municipality: 'Municipio X',
+      address: 'Dirección 123',
+      gpsLatitude: 15.123456,
+      gpsLongitude: -90.123456,
+    },
+    {
+      name: 'Estación Central',
+      municipality: 'Ciudad Capital',
+      address: 'Avenida Principal 101',
+      gpsLatitude: 14.634915,
+      gpsLongitude: -90.506882,
+    },
+    {
+      name: 'Gasolinera El Norte',
+      municipality: 'San Juan',
+      address: 'Carretera al Norte Km 18',
+      gpsLatitude: 15.78225,
+      gpsLongitude: -91.145678,
+    },
   ];
 
-  for (const station of stations) {
-    const exists = await repo.findOneBy({ name: station.name });
-    if (!exists) {
-      const fuelStation = repo.create({ name: station.name, location: station.location });
-      await repo.save(fuelStation);
-    }
-  }
-
-  console.log('✅ Fuel Stations seeded');
-  await dataSource.destroy();
+  await fuelStationsRepository.save(fuelStations);
+  console.log('fuel-stations guardado con éxito');
 };

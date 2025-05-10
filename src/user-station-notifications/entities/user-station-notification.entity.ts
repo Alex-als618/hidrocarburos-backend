@@ -6,14 +6,14 @@ import {
   JoinColumn,
   Index,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { FuelStation } from '../../fuel-stations/entities/fuel-station.entity';
 
 @Entity('user_station_notifications')
 //@Index('idx_user_fuel_station', ['id_user', 'id_fuel_station'], { unique: true })
-@Index('idx_user_station', ['id_user', 'id_fuel_station'], { unique: true })
+@Index('idx_user_station', ['idUser', 'idFuelStation'], { unique: true })
 export class UserStationNotification {
   @PrimaryGeneratedColumn({ name: 'id_user_station_notification' })
   idUserStationNotification: number;
@@ -33,11 +33,11 @@ export class UserStationNotification {
   @Column({ name: 'id_fuel_station' })
   idFuelStation: number;
 
-  @ManyToOne(() => User, user => user.userStationNotifications)
+  @ManyToOne(() => User, (user) => user.userStationNotifications)
   @JoinColumn({ name: 'id_user' })
   user: User;
 
-  @ManyToOne(() => FuelStation, fs => fs.userStationNotifications)
+  @ManyToOne(() => FuelStation, (fs) => fs.userStationNotifications)
   @JoinColumn({ name: 'id_fuel_station' })
   fuelStation: FuelStation;
-}  
+}

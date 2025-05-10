@@ -1,7 +1,7 @@
-import { IsNumber, IsString } from "class-validator";
+//import { IsNumber, IsString } from "class-validator";
 
-export class CreateFuelStationDto{
-    @IsString()
+export class CreateFuelStationDto {
+  /*@IsString()
     name: string;
 
     @IsString()
@@ -14,5 +14,5 @@ export class CreateFuelStationDto{
     gpsLatitude: number;
 
     @IsNumber()
-    gpsLongitude: number;
+    gpsLongitude: number;*/
 }
