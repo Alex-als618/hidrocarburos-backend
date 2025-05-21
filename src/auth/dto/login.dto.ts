@@ -1,11 +1,8 @@
+// auth/dto/login.dto.ts
 import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
+export class LoginDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -14,8 +11,4 @@ export class CreateUserDto {
   @MinLength(6)
   @Transform(({ value }) => value.trim())
   password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  phone: string;
 }

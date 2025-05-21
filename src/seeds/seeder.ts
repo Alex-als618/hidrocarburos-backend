@@ -1,39 +1,41 @@
-import { AppDataSource } from '../data-source';
-import { seedRoles } from './roles.seeder';
-import { seedUsers } from './users.seeder';
-import { seedFuelStations } from './fuel-stations.seeder';
-import { seedFuelTypes } from './fuel-types.seeder';
-import { seedFuelAvailability } from './fuel-availabilities.seeder';
-import { seedUserStationNotifications } from './user-station-notifications.seeder';
-import { seedStationImages } from './station-images.seeder';
+// import { AppDataSource } from '../data-source';
+// import { seedRoles } from './roles.seeder';
+// import { seedUsers } from './users.seeder';
+// import { seedFuelStations } from './fuel-stations.seeder';
+// import { seedFuelTypes } from './fuel-types.seeder';
+// import { seedFuelAvailability } from './fuel-availabilities.seeder';
+// import { seedUserStationNotifications } from './user-station-notifications.seeder';
+// import { seedStationImages } from './station-images.seeder';
 
-const runSeed = async () => {
-  await AppDataSource.initialize();
-  console.log('📦 Base de datos conectada');
+// const runSeed = async () => {
 
-  // Primero sembramos los roles
-  await seedRoles(AppDataSource);
+//   await AppDataSource.initialize();
+//   console.log('📦 Base de datos conectada');
 
-  await seedFuelStations(AppDataSource);
+//   // Primero sembramos los roles
+//   await seedRoles(AppDataSource);
 
-  await seedUsers(AppDataSource);
+//   await seedFuelStations(AppDataSource);
 
-  await seedFuelTypes(AppDataSource);
+//   await seedUsers(AppDataSource);
 
-  await seedFuelAvailability(AppDataSource);
+//   await seedFuelTypes(AppDataSource);
 
-  await seedUserStationNotifications(AppDataSource);
+//   await seedFuelAvailability(AppDataSource);
 
-  await seedStationImages(AppDataSource);
+//   await seedUserStationNotifications(AppDataSource);
 
-  console.log('🌱 Seeders terminados');
-  process.exit(0);
-};
+//   await seedStationImages(AppDataSource);
 
-runSeed().catch((err) => {
-  console.error('❌ Error al ejecutar el seed:', err);
-  process.exit(1);
-});
+//   console.log('🌱 Seeders terminados');
+//   process.exit(0);
+
+// };
+
+// runSeed().catch((err) => {
+//   console.error('❌ Error al ejecutar el seed:', err);
+//   process.exit(1);
+// });
 
 //import { DataSource } from 'typeorm';
 

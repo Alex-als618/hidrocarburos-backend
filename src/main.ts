@@ -2,7 +2,7 @@ import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
-import { AppDataSource } from './data-source';
+// import { AppDataSource } from './data-source';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
 
@@ -19,13 +19,13 @@ async function bootstrap() {
   });
 
   //SEEDER
-  AppDataSource.initialize()
-    .then(() => {
-      console.log('Data Source has been initialized!');
-    })
-    .catch((err) => {
-      console.error('Error during Data Source initialization:', err);
-    });
+  // AppDataSource.initialize()
+  //   .then(() => {
+  //     console.log('Data Source has been initialized!');
+  //   })
+  //   .catch((err) => {
+  //     console.error('Error during Data Source initialization:', err);
+  //   });
   //add
 
   // Configurar Helmet globalmente

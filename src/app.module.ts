@@ -10,6 +10,7 @@ import { RolesModule } from './roles/roles.module';
 import { FuelAvailabilitiesModule } from './fuel-availabilities/fuel-availabilities.module';
 import { FuelTypesModule } from './fuel-types/fuel-types.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     UsersModule,
     UserStationNotificationsModule,
     StationImagesModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

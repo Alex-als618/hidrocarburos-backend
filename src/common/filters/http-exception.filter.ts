@@ -26,17 +26,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Construye la respuesta estructurada con información útil
+    let message = 'Internal Server Error';
+
+    // Detecta si la excepción es de validación (BadRequestException)
+    if (exception instanceof HttpException) {
+      const response = exception.getResponse();
+      message =
+        typeof response === 'object' && response['message']
+          ? response['message'] // Muestra los mensajes de validación
+          : exception.message;
+    }
+
     const responseBody = {
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
-      message:
-        exception instanceof HttpException
-          ? exception.message
-          : 'Internal Server Error',
+      error: exception instanceof HttpException ? exception.name : 'Error',
+      message, // Ahora incluirá los mensajes de validación
     };
 
-    // Envía la respuesta al cliente con el código de estado y los detalles del error
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }
