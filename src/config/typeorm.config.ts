@@ -1,10 +1,12 @@
 import { ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSourceOptions } from 'typeorm';
 import { join } from 'path';
 
 //quitar el example del env
 //ignorar el docker-compose.yml si usa postgres local
-export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
+export const typeormConfig = (
+  configService: ConfigService,
+): DataSourceOptions => ({
   type: 'postgres',
   host: configService.get<string>('DB_HOST'),
   port: configService.get<number>('DB_PORT'),
@@ -13,4 +15,5 @@ export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
   database: configService.get<string>('DB_NAME'),
   entities: [join(__dirname + '../../**/*.entity{.ts,.js}')],
   synchronize: true,
+  // logging: true,
 });

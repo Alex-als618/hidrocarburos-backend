@@ -12,7 +12,7 @@
 En tu package.json, agrega este script para usar seeder:
 "scripts": {
 "seed": "ts-node src/seeds/seeder.ts",
-}
+} // para tener ts-node: npm install --save-dev ts-nod
 
 npm run seed = para carga los seeder
 
