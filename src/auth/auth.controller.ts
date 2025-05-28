@@ -3,6 +3,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
+//modulo de autenticación maneja el registro y login de usuarios
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
