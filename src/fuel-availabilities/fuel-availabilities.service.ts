@@ -13,30 +13,34 @@ export class FuelAvailabilitiesService {
   ) {}
 
   async create(dto: CreateFuelAvailabilityDto) {
-    //const availability = this.fuelAvailabilityRepository.create(dto);
-    return /*await this.fuelAvailabilityRepository.save(availability)*/ 'prueba create';
+    const availability = this.fuelAvailabilityRepository.create(dto);
+    return await this.fuelAvailabilityRepository.save(availability);
   }
 
   async findAll() {
-    return;
-    /*this.fuelAvailabilityRepository.find({
+    return await this.fuelAvailabilityRepository.find({
       relations: ['fuelStation', 'fuelType'],
-    })*/ ('prueba findAll');
+    });
   }
 
   async findOne(id: number) {
-    return;
-    /*this.fuelAvailabilityRepository.findOne({
+    return await this.fuelAvailabilityRepository.findOne({
       where: { idFuelAvailability: id },
       relations: ['fuelStation', 'fuelType'],
-    })*/ `prueba findOne ${id}`;
+    });
   }
 
-  update(id: number, updateFuelAvailabilityDto: UpdateFuelAvailabilityDto) {
-    return `This action updates a #${id} fuelAvailability`;
+  async update(id: number, dto: UpdateFuelAvailabilityDto) {
+    await this.fuelAvailabilityRepository.update(id, dto);
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} fuelAvailability`;
+  async remove(id: number) {
+    const toDelete = await this.findOne(id);
+    if (toDelete) {
+      await this.fuelAvailabilityRepository.remove(toDelete);
+      return { message: 'Eliminado correctamente' };
+    }
+    return { message: 'No encontrado' };
   }
 }

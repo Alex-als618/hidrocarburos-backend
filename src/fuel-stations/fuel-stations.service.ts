@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFuelStationDto } from './dto/create-fuel-station.dto';
 import { UpdateFuelStationDto } from './dto/update-fuel-station.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,23 +13,40 @@ export class FuelStationsService {
   ) {}
 
   async create(dto: CreateFuelStationDto) {
-    //const station = this.stationRepository.create(dto);
-    return /*await this.stationRepository.save(station)*/ 'prueba create';
+    const station = this.stationRepository.create(dto);
+    return await this.stationRepository.save(station);
   }
 
   async findAll() {
-    return /*this.stationRepository.find()*/ 'prueba findAll';
+    return await this.stationRepository.find({
+      relations: ['fuelAvailabilities', 'stationImages'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} fuelStation`;
+  async findOne(id: number) {
+    const station = await this.stationRepository.findOne({
+      where: { idFuelStation: id },
+      relations: ['fuelAvailabilities', 'stationImages'],
+    });
+
+    if (!station) {
+      throw new NotFoundException(`FuelStation #${id} not found`);
+    }
+
+    return station;
   }
 
-  update(id: number, updateFuelStationDto: UpdateFuelStationDto) {
-    return `This action updates a #${id} fuelStation`;
+  async update(id: number, dto: UpdateFuelStationDto) {
+    const station = await this.findOne(id);
+    const updated = Object.assign(station, dto);
+    return await this.stationRepository.save(updated);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} fuelStation`;
+  async remove(id: number) {
+    const result = await this.stationRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`FuelStation #${id} not found`);
+    }
+    return { message: `FuelStation #${id} deleted` };
   }
 }
