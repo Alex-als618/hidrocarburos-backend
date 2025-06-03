@@ -5,9 +5,12 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import {
+  comparePassword,
+  hashPassword,
+} from 'src/common/utils/password-hash.util';
 
 @Injectable()
 export class AuthService {
@@ -24,8 +27,7 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await hashPassword(password);
 
     const user = await this.usersService.create({
       ...createUserDto,
@@ -45,12 +47,16 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('User not found');
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { id: user.idUser, email: user.email };
+    const payload = {
+      id: user.idUser,
+      email: user.email,
+      role: user.role.roleName,
+    };
     const token = await this.jwtService.signAsync(payload);
 
     return {
