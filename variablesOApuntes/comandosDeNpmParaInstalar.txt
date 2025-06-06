@@ -121,4 +121,5 @@ export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
 */
 
 /*****Implementar almacenamiento y gestión de imágenes en el servidor con Multer.
-npm install --save @nestjs/platform-express multer
+npm install --save multer
+npm install --save-dev @types/express @types/multer
