@@ -45,7 +45,7 @@ export class AuthService {
 
     const user = await this.usersService.findOneByEmail(email);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new UnauthorizedException('Invalid credentials');
     }
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {

@@ -16,6 +16,8 @@ export class UsersService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
   ) {}
+
+  // creo que hashear la contraseña sin importar que sea post/register o post/users
   async create(createUserDto: CreateUserDto) {
     const { idRole, ...rest } = createUserDto;
 
