@@ -1,29 +1,41 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserStationNotification } from './entities/user-station-notification.entity';
 import { CreateUserStationNotificationDto } from './dto/create-user-station-notification.dto';
 import { UpdateUserStationNotificationDto } from './dto/update-user-station-notification.dto';
 
 @Injectable()
 export class UserStationNotificationsService {
-  create(createUserStationNotificationDto: CreateUserStationNotificationDto) {
-    return 'This action adds a new userStationNotification';
+  constructor(
+    @InjectRepository(UserStationNotification)
+    private readonly userStationNotificationRepository: Repository<UserStationNotification>,
+  ) {}
+
+  async create(dto: CreateUserStationNotificationDto) {
+    const notification = this.userStationNotificationRepository.create(dto);
+    return await this.userStationNotificationRepository.save(notification);
   }
 
-  findAll() {
-    return `This action returns all userStationNotifications`;
+  async findAll() {
+    return await this.userStationNotificationRepository.find({
+      relations: ['user', 'fuelStation'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userStationNotification`;
+  async findOne(id: number) {
+    return await this.userStationNotificationRepository.findOne({
+      where: { idUserStationNotification: id },
+      relations: ['user', 'fuelStation'],
+    });
   }
 
-  update(
-    id: number,
-    updateUserStationNotificationDto: UpdateUserStationNotificationDto,
-  ) {
-    return `This action updates a #${id} userStationNotification`;
+  async update(id: number, dto: UpdateUserStationNotificationDto) {
+    await this.userStationNotificationRepository.update(id, dto);
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} userStationNotification`;
+  async remove(id: number) {
+    return await this.userStationNotificationRepository.delete(id);
   }
 }
