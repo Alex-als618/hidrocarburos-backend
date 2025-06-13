@@ -12,7 +12,7 @@
 En tu package.json, agrega este script para usar seeder:
 "scripts": {
 "seed": "ts-node src/seeds/seeder.ts",
-}
+} // para tener ts-node: npm install --save-dev ts-nod
 
 npm run seed = para carga los seeder
 
@@ -122,3 +122,6 @@ export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
 
 /*****Implementar almacenamiento y gestión de imágenes en el servidor con Multer.
 npm install --save @nestjs/platform-express multer
+o
+npm install --save multer
+npm install --save-dev @types/express @types/multer

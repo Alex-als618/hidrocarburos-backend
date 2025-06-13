@@ -1,22 +1,18 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 // import { AppDataSource } from './data-source';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule /*, { cors: true }*/,
+  );
   app.setGlobalPrefix('api');
-
-  //add
-  //CORS
-  app.enableCors({
-    origin: ['http://localhost:4200', 'https://tudominio.com'], // permite solo estos orígenes
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
 
   //SEEDER
   // AppDataSource.initialize()
@@ -36,6 +32,23 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
 
   // Validación de datos global
+  // para todos
+  //app.enableCors({});
+
+  //para origin en especifico
+  // app.enableCors({
+  //   origin: ['http://localhost:4200', 'https://tudominio.com'], // permite solo estos orígenes
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  //   credentials: true,
+  // });
+
+  // Imagenes
+  // app.useStaticAssets(join(__dirname, '..', 'uploads/images'));
+  app.useStaticAssets(
+    join(__dirname, '..', 'uploads', 'images', 'station-images'),
+    { prefix: '/uploads/images/station-images/' },
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
