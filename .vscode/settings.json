@@ -2,10 +2,14 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "eslint.format.enable": true,
+<<<<<<< alexander
+  "eslint.validate": ["typescript"]
+=======
   "eslint.validate": [
     "typescript"
   ],
   "[typescript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   }
+>>>>>>> main
 }

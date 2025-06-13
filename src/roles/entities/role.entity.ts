@@ -18,8 +18,8 @@ export class Role {
   @Column({ name: 'role_name', type: 'varchar', length: 50, unique: true })
   roleName: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  description: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description?: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

@@ -9,6 +9,8 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { FuelAvailabilitiesModule } from './fuel-availabilities/fuel-availabilities.module';
 import { FuelTypesModule } from './fuel-types/fuel-types.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +22,14 @@ import { FuelTypesModule } from './fuel-types/fuel-types.module';
       useFactory: typeormConfig,
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // Intervalo de tiempo en milisegundos
+          limit: 20, // Número de solicitudes permitidas por cliente en ese tiempo
+        },
+      ],
+    }),
     FuelStationsModule,
     FuelTypesModule,
     FuelAvailabilitiesModule,
@@ -27,6 +37,7 @@ import { FuelTypesModule } from './fuel-types/fuel-types.module';
     UsersModule,
     UserStationNotificationsModule,
     StationImagesModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

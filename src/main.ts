@@ -1,8 +1,12 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+
+// import { AppDataSource } from './data-source';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(
@@ -10,8 +14,24 @@ async function bootstrap() {
   );
   app.setGlobalPrefix('api');
 
+  //SEEDER
+  // AppDataSource.initialize()
+  //   .then(() => {
+  //     console.log('Data Source has been initialized!');
+  //   })
+  //   .catch((err) => {
+  //     console.error('Error during Data Source initialization:', err);
+  //   });
   //add
-  //CORS
+
+  // Configurar Helmet globalmente
+  app.use(helmet());
+
+  // filtro global de excepciones
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
+
+  // Validación de datos global
   // para todos
   //app.enableCors({});
 
@@ -28,9 +48,6 @@ async function bootstrap() {
     join(__dirname, '..', 'uploads', 'images', 'station-images'),
     { prefix: '/uploads/images/station-images/' },
   );
-
-  //SEEDER
-  //add
 
   app.useGlobalPipes(
     new ValidationPipe({
