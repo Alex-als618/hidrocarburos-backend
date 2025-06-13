@@ -12,30 +12,33 @@ export class FuelTypesService {
     private readonly fuelTypeRepository: Repository<FuelType>,
   ) {}
 
-  async create(createFuelTypeDto: CreateFuelTypeDto) {
-    const fuelType = this.fuelTypeRepository.create(createFuelTypeDto);
-    return await this.fuelTypeRepository.save(fuelType);
+  async create(createFuelTypeDto: CreateFuelTypeDto): Promise<FuelType> {
+    // Puedes usar save directamente con el DTO
+    return await this.fuelTypeRepository.save(createFuelTypeDto);
   }
 
-  async findAll() {
+  async findAll(): Promise<FuelType[]> {
     return await this.fuelTypeRepository.find({
       relations: ['fuelAvailabilities'],
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<FuelType | null> {
     return await this.fuelTypeRepository.findOne({
       where: { idFuelType: id },
       relations: ['fuelAvailabilities'],
     });
   }
 
-  async update(id: number, updateFuelTypeDto: UpdateFuelTypeDto) {
+  async update(
+    id: number,
+    updateFuelTypeDto: UpdateFuelTypeDto,
+  ): Promise<FuelType | null> {
     await this.fuelTypeRepository.update(id, updateFuelTypeDto);
     return this.findOne(id);
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<{ message: string }> {
     const toDelete = await this.findOne(id);
     if (toDelete) {
       await this.fuelTypeRepository.remove(toDelete);

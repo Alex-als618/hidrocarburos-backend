@@ -11,6 +11,8 @@ import { FuelAvailabilitiesModule } from './fuel-availabilities/fuel-availabilit
 import { FuelTypesModule } from './fuel-types/fuel-types.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -25,8 +27,8 @@ import { AuthModule } from './auth/auth.module';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60000, // Intervalo de tiempo en milisegundos
-          limit: 20, // Número de solicitudes permitidas por cliente en ese tiempo
+          ttl: 60000,
+          limit: 20,
         },
       ],
     }),
@@ -38,6 +40,8 @@ import { AuthModule } from './auth/auth.module';
     UserStationNotificationsModule,
     StationImagesModule,
     AuthModule,
+    TerminusModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
