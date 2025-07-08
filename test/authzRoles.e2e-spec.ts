@@ -32,7 +32,7 @@ describe('Authorization (Admin) (e2e)', () => {
     await userRepo.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
     await roleRepo.query('TRUNCATE TABLE roles RESTART IDENTITY CASCADE');
 
-    // Función auxiliar para registrar y loguear usuarios (DRY)
+    // Función auxiliar para registrar y loguear usuarios
     const registerAndLogin = async (userData: any, roleId: number) => {
       let res = await request(app.getHttpServer())
         .post('/auth/register')

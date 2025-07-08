@@ -7,7 +7,8 @@ import { Role } from '../src/roles/entities/role.entity';
 import { User } from '../src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 
-// usar npm run test:e2e, para ejecutar este test
+// usar npm run test:e2e, para ejecutar los test
+// usar npm run test:e2e -- --runInBand para ejecutar uno por uno
 
 describe('AuthController and validations (e2e)', () => {
   let app: INestApplication;
@@ -44,10 +45,13 @@ describe('AuthController and validations (e2e)', () => {
   });
 
   // Test: Registro exitoso de usuario
+  let uniqueEmail: string;
+
   it('POST /auth/register - registra un usuario', async () => {
+    uniqueEmail = `testuser_${Date.now()}@example.com`;
     const res = await request(app.getHttpServer()).post('/auth/register').send({
       name: 'Test User',
-      email: 'test@example.com',
+      email: uniqueEmail,
       password: '12345678',
       phone: '123456789',
       idRole: 1,
@@ -62,14 +66,26 @@ describe('AuthController and validations (e2e)', () => {
   it('POST /auth/register - falla si el email ya existe', async () => {
     const res = await request(app.getHttpServer()).post('/auth/register').send({
       name: 'Test User',
-      email: 'test@example.com',
+      email: 'test@example.com', // Usar un email fijo para esta prueba
       password: '12345678',
       phone: '123456789',
       idRole: 1,
     });
 
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-    expect(res.body.message).toMatch(/email.*exist/i);
+    expect(res.status).toBe(HttpStatus.CREATED);
+
+    const duplicateRes = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'test@example.com', // Intentar registrar el mismo email
+        password: '12345678',
+        phone: '123456789',
+        idRole: 1,
+      });
+
+    expect(duplicateRes.status).toBe(HttpStatus.BAD_REQUEST);
+    expect(duplicateRes.body.message).toMatch(/email.*exist/i);
   });
 
   // Test: Login con email incorrecto
@@ -87,7 +103,7 @@ describe('AuthController and validations (e2e)', () => {
   it('POST /auth/login - falla con contraseña incorrecta', async () => {
     const res = await request(app.getHttpServer()).post('/auth/login').send({
       email: 'test@example.com',
-      password: 'contarseñaIncorrecta',
+      password: 'contraseñaIncorrecta',
     });
 
     expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -97,7 +113,7 @@ describe('AuthController and validations (e2e)', () => {
   // Test: Login exitoso y generación de JWT
   it('POST /auth/login - genera un JWT', async () => {
     const res = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'test@example.com',
+      email: uniqueEmail,
       password: '12345678',
     });
 
@@ -129,7 +145,7 @@ describe('AuthController and validations (e2e)', () => {
       .set('Authorization', `Bearer ${jwtToken}`);
     expect(res.status).toBe(HttpStatus.OK);
     expect(res.body).toHaveProperty('idUser', createdUserId);
-    expect(res.body).toHaveProperty('email', 'test@example.com');
+    expect(res.body).toHaveProperty('email', uniqueEmail);
     expect(res.body.role).toHaveProperty('roleName', 'user');
   });
 });
