@@ -38,4 +38,29 @@ export class UserStationNotificationsService {
   async remove(id: number) {
     return await this.userStationNotificationRepository.delete(id);
   }
+
+  // Método para crear o actualizar preferencia (upsert)
+  async upsert(dto: CreateUserStationNotificationDto) {
+    const { idUser, idFuelStation, subscribed } = dto;
+
+    const existing = await this.userStationNotificationRepository.findOne({
+      where: { idUser, idFuelStation },
+    });
+
+    if (existing) {
+      existing.subscribed = subscribed;
+      return this.userStationNotificationRepository.save(existing);
+    }
+
+    const newNotification = this.userStationNotificationRepository.create(dto);
+    return this.userStationNotificationRepository.save(newNotification);
+  }
+
+  // Método para obtener todas las preferencias de un usuario específico
+  async findByUser(idUser: number) {
+    return this.userStationNotificationRepository.find({
+      where: { idUser },
+      relations: ['fuelStation'],
+    });
+  }
 }

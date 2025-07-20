@@ -3,52 +3,66 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
+  UseGuards,
+  HttpException,
+  HttpStatus,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { UserStationNotificationsService } from './user-station-notifications.service';
 import { CreateUserStationNotificationDto } from './dto/create-user-station-notification.dto';
-import { UpdateUserStationNotificationDto } from './dto/update-user-station-notification.dto';
+import { AuthGuard } from './auth.guard';
+
+// Extiende Request para incluir user con id
+interface RequestWithUser extends Request {
+  user: {
+    id: number;
+    // otros campos si los tienes
+  };
+}
 
 @Controller('user-station-notifications')
+@UseGuards(AuthGuard)
 export class UserStationNotificationsController {
   constructor(
     private readonly userStationNotificationsService: UserStationNotificationsService,
   ) {}
 
   @Post()
-  create(
-    @Body() createUserStationNotificationDto: CreateUserStationNotificationDto,
+  async upsertNotification(
+    @Req() req: RequestWithUser,
+    @Body() dto: CreateUserStationNotificationDto,
   ) {
-    return this.userStationNotificationsService.create(
-      createUserStationNotificationDto,
-    );
+    try {
+      const idUser = req.user.id;
+      const payload = { ...dto, idUser };
+      const result = await this.userStationNotificationsService.upsert(payload);
+      return {
+        message: 'Preferencia guardada correctamente',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        'Error guardando preferencia',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get()
-  findAll() {
-    return this.userStationNotificationsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userStationNotificationsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserStationNotificationDto: UpdateUserStationNotificationDto,
-  ) {
-    return this.userStationNotificationsService.update(
-      +id,
-      updateUserStationNotificationDto,
-    );
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userStationNotificationsService.remove(+id);
+  async findUserPreferences(@Req() req: RequestWithUser) {
+    try {
+      const idUser = req.user.id;
+      const prefs = await this.userStationNotificationsService.findByUser(idUser);
+      return {
+        message: 'Preferencias obtenidas correctamente',
+        data: prefs,
+      };
+    } catch (error) {
+      throw new HttpException(
+        'Error obteniendo preferencias',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

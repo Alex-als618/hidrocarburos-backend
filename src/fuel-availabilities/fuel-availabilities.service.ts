@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFuelAvailabilityDto } from './dto/create-fuel-availability.dto';
 import { UpdateFuelAvailabilityDto } from './dto/update-fuel-availability.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,15 +24,32 @@ export class FuelAvailabilitiesService {
   }
 
   async findOne(id: number) {
-    return await this.fuelAvailabilityRepository.findOne({
+    const availability = await this.fuelAvailabilityRepository.findOne({
       where: { idFuelAvailability: id },
       relations: ['fuelStation', 'fuelType'],
     });
+
+    if (!availability) {
+      throw new NotFoundException(`FuelAvailability #${id} not found`);
+    }
+
+    return availability;
   }
 
   async update(id: number, dto: UpdateFuelAvailabilityDto) {
-    await this.fuelAvailabilityRepository.update(id, dto);
-    return this.findOne(id);
+    const existing = await this.findOne(id);
+
+    const isQuantityChanged =
+      dto.availableQuantity !== undefined &&
+      dto.availableQuantity !== existing.availableQuantity;
+
+    if (isQuantityChanged && dto.availableQuantity !== undefined) {
+      existing.availableQuantity = dto.availableQuantity;
+      existing.updatedAt = new Date();
+      return await this.fuelAvailabilityRepository.save(existing);
+    }
+
+    return existing;
   }
 
   async remove(id: number) {
