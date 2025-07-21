@@ -88,4 +88,11 @@ export class UsersService {
     await this.userRepository.remove(user);
     return user;
   }
+
+  async findOneByResetToken(token: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { resetToken: token },
+    });
+  }
+
 }
