@@ -7,6 +7,7 @@ import { Role } from '../src/roles/entities/role.entity';
 import { User } from '../src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 
+// Pruebas e2e para autorización basada en roles: se verifica acceso permitido/denegado según rol.
 describe('Authorization (Admin) (e2e)', () => {
   let app: INestApplication;
   let userRepo: Repository<User>;
@@ -22,26 +23,51 @@ describe('Authorization (Admin) (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(new ValidationPipe()); // Habilitar validaciones globales
     await app.init();
 
     userRepo = moduleFixture.get(getRepositoryToken(User));
     roleRepo = moduleFixture.get(getRepositoryToken(Role));
 
-    // Limpiar tablas
+    // Limpiar las tablas para asegurar que no haya datos residuales
     await userRepo.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
     await roleRepo.query('TRUNCATE TABLE roles RESTART IDENTITY CASCADE');
+
+    // Crear roles
+    let adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
+    if (!adminRole) {
+      await roleRepo.save({
+        roleName: 'admin',
+        description: 'Rol de administrador',
+      });
+      adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
+    }
+    if (!adminRole) {
+      throw new Error('No se pudo crear ni encontrar el rol admin');
+    }
+
+    let userRole = await roleRepo.findOneBy({ roleName: 'user' });
+    if (!userRole) {
+      await roleRepo.save({
+        roleName: 'user',
+        description: 'Rol de usuario regular',
+      });
+      userRole = await roleRepo.findOneBy({ roleName: 'user' });
+    }
+    if (!userRole) {
+      throw new Error('No se pudo crear ni encontrar el rol user');
+    }
 
     // Función auxiliar para registrar y loguear usuarios
     const registerAndLogin = async (userData: any, roleId: number) => {
       let res = await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/users')
         .send({
           ...userData,
           idRole: roleId,
         });
       expect(res.status).toBe(HttpStatus.CREATED);
-      const userId = res.body.user.idUser;
+      const userId = res.body.idUser;
 
       res = await request(app.getHttpServer()).post('/auth/login').send({
         email: userData.email,
@@ -52,17 +78,7 @@ describe('Authorization (Admin) (e2e)', () => {
       return { token, userId };
     };
 
-    // Crear roles
-    const adminRole = await roleRepo.save({
-      roleName: 'admin',
-      description: 'Rol de administrador',
-    });
-    const userRole = await roleRepo.save({
-      roleName: 'user',
-      description: 'Rol de usuario regular',
-    });
-
-    // Registrar y loguear usuario admin y normal
+    // Registrar admin y usuario normal
     const adminData = {
       name: 'Admin User',
       email: 'admin@example.com',
@@ -87,23 +103,22 @@ describe('Authorization (Admin) (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app.close(); // Cerrar la aplicación después de las pruebas
   });
 
-  // Test: Acceso con token admin a un endpoint restringido a admin o manager.
+  // Test: Acceso permitido a admin a un endpoint restringido
   it('GET /roles/:id - acceso permitido a admin', async () => {
-    //endpoint GET /roles/:id está protegido con roles: ['admin', 'manager']
     const res = await request(app.getHttpServer())
       .get(`/roles/1`)
-      .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(HttpStatus.OK);
+      .set('Authorization', `Bearer ${adminToken}`); // Usar token admin
+    expect(res.status).toBe(HttpStatus.OK); // Verificar que se permite el acceso
   });
 
-  // Test: Acceso con token de usuario normal a un endpoint restringido (debe fallar con 403 Forbidden).
+  // Test: Acceso denegado a usuario normal a un endpoint restringido
   it('GET /roles/:id - acceso denegado a usuario normal', async () => {
     const res = await request(app.getHttpServer())
       .get(`/roles/1`)
-      .set('Authorization', `Bearer ${userToken}`);
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      .set('Authorization', `Bearer ${userToken}`); // Usar token de usuario normal
+    expect(res.status).toBe(HttpStatus.FORBIDDEN); // Debe fallar con 403 Forbidden
   });
 });

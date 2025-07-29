@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,9 +21,13 @@ export class UsersService {
     private readonly roleRepository: Repository<Role>,
   ) {}
 
-  // creo que hashear la contraseña sin importar que sea post/register o post/users
   async create(createUserDto: CreateUserDto) {
-    const { idRole, ...rest } = createUserDto;
+    const { idRole, email, password } = createUserDto;
+
+    const userExists = await this.findOneByEmail(email);
+    if (userExists) {
+      throw new BadRequestException('Email already exists');
+    }
 
     let role: Role | null;
     if (idRole) {
@@ -30,8 +38,11 @@ export class UsersService {
       if (!role) throw new NotFoundException(`Default user role not found`);
     }
 
+    const hashedPassword = await hashPassword(password);
+
     const user = this.userRepository.create({
-      ...rest,
+      ...createUserDto,
+      password: hashedPassword,
       role,
     });
 
