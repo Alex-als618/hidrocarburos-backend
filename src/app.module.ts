@@ -24,11 +24,13 @@ import { TerminusModule } from '@nestjs/terminus';
       useFactory: typeormConfig,
       inject: [ConfigService],
     }),
+    // Configuración del módulo Throttler para la limitación de tasas de peticiones (Rate Limiting).
+    // // Limita las peticiones por minuto por cliente, ayudando a prevenir ataques de denegación de servicio (DoS).
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60000,
-          limit: 20,
+          ttl: 60000, // 1 minuto
+          limit: 40, // 40 peticiones por minuto
         },
       ],
     }),

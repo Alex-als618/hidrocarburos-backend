@@ -24,10 +24,11 @@ async function bootstrap() {
   //   });
   //add
 
-  // Configurar Helmet globalmente
+  // Configuración global de seguridad HTTP con Helmet para proteger la app de vulnerabilidades comunes.
   app.use(helmet());
 
-  // filtro global de excepciones
+  // filtro global de excepciones personalizado.
+  // Permite manejar errores de forma coherente en toda la API, devolviendo respuestas estructuradas.
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
 

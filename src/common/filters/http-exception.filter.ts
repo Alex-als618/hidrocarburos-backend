@@ -7,44 +7,44 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
-// Esto captura todas las excepciones que ocurran en la aplicación
+// Este decorador indica que el filtro captura cualquier excepción
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
-  // Este método captura cualquier error y lo transforma en una respuesta HTTP estructurada
+  // Método llamado automáticamente cuando se lanza una excepción dentro del contexto HTTP
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
-    const ctx = host.switchToHttp();
+    const ctx = host.switchToHttp(); // Obtiene el contexto HTTP
 
-    // Determina el código de estado del error
-    // Si es una excepción de NestJS (HttpException), obtiene su código de estado
-    // Si no, asigna un error interno del servidor (500)
+    // Determina el código de estado HTTP
     const httpStatus =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Construye la respuesta estructurada con información útil
+    // Mensaje por defecto
     let message = 'Internal Server Error';
 
-    // Detecta si la excepción es de validación (BadRequestException)
+    // Si es una excepción conocida (HttpException), extrae el mensaje
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
       message =
         typeof response === 'object' && response['message']
-          ? response['message'] // Muestra los mensajes de validación
+          ? response['message'] // Muestra mensajes de validación si existen
           : exception.message;
     }
 
+    // Construye el cuerpo de la respuesta
     const responseBody = {
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
       error: exception instanceof HttpException ? exception.name : 'Error',
-      message, // Ahora incluirá los mensajes de validación
+      message,
     };
 
+    // Envía la respuesta al cliente
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }
