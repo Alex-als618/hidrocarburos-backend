@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 
 // Este decorador indica que el filtro captura cualquier excepción
 @Catch()
@@ -14,7 +15,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   // Método llamado automáticamente cuando se lanza una excepción dentro del contexto HTTP
   catch(exception: unknown, host: ArgumentsHost): void {
-    const { httpAdapter } = this.httpAdapterHost;
+    const httpAdapter: ExpressAdapter = this.httpAdapterHost
+      .httpAdapter as ExpressAdapter;
     const ctx = host.switchToHttp(); // Obtiene el contexto HTTP
 
     // Determina el código de estado HTTP
@@ -24,15 +26,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Mensaje por defecto
-    let message = 'Internal Server Error';
+    let message: string | string[] = 'Internal Server Error';
 
     // Si es una excepción conocida (HttpException), extrae el mensaje
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
       message =
         typeof response === 'object' && response['message']
-          ? response['message'] // Muestra mensajes de validación si existen
-          : exception.message;
+          ? String(response['message']) // Muestra mensajes de validación si existen
+          : String(exception.message);
     }
 
     // Construye el cuerpo de la respuesta

@@ -27,10 +27,13 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'error',
-      "@typescript-eslint/no-unsafe-member-access": "error"
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-extra-semi': 'warn',
+      '@typescript-eslint/no-empty-function': 'warn',
     },
   },
 );

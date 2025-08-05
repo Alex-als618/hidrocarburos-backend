@@ -37,7 +37,10 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @ManyToOne(() => Role, (role) => role.users, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Role, (role) => role.users, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'id_role' })
   role: Role;
 

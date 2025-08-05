@@ -14,7 +14,7 @@ export class AuthService {
 
   async register(createUserDto: CreateUserDto) {
     //console.log('Registering user:', createUserDto);
-    
+
     const user = await this.usersService.create({
       ...createUserDto,
       idRole: undefined,

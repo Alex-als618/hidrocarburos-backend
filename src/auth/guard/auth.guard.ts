@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
@@ -14,7 +15,10 @@ import { Request } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
 
   // Método llamado automáticamente para proteger rutas con este guard
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,7 +32,7 @@ export class AuthGuard implements CanActivate {
     try {
       // Verifica el token y extrae el payload
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET || 'your_jwt_secret_key',
+        secret: this.configService.get<string>('JWT_SECRET'),
       });
 
       // Guarda el payload en la solicitud para usarlo en controladores
