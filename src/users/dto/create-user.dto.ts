@@ -27,6 +27,10 @@ export class CreateUserDto {
   @IsNotEmpty()
   phone: string;
 
+  @IsString()
+  @IsOptional()
+  refreshToken?: string;
+
   @IsInt()
   @IsOptional()
   idRole?: number;

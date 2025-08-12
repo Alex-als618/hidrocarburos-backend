@@ -31,6 +31,7 @@ describe('AuthController and validations (e2e)', () => {
 
     // Inicializar la aplicación NestJS
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     app.useGlobalPipes(new ValidationPipe()); // Usar pipes globales para validaciones
     await app.init();
 
@@ -56,15 +57,17 @@ describe('AuthController and validations (e2e)', () => {
   let uniqueEmail: string;
 
   // Test: Registro exitoso de usuario
-  it('POST /auth/register - registra un usuario', async () => {
+  it('POST /api/auth/register - registra un usuario', async () => {
     uniqueEmail = `testuser_${Date.now()}@example.com`; // Email único para cada prueba
-    const res = await request(app.getHttpServer()).post('/auth/register').send({
-      name: 'Test User',
-      email: uniqueEmail,
-      password: '12345678',
-      phone: '123456789',
-      idRole: 1, // Asignación del rol de usuario
-    });
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        name: 'Test User',
+        email: uniqueEmail,
+        password: '12345678',
+        phone: '123456789',
+        idRole: 1, // Asignación del rol de usuario
+      });
 
     expect(res.status).toBe(HttpStatus.CREATED); // Esperamos un código 201 (Creado)
     expect(res.body.user).toHaveProperty('idUser'); // Verificar que se creó un usuario con id
@@ -72,20 +75,22 @@ describe('AuthController and validations (e2e)', () => {
   });
 
   // Test: Evitar doble registro (email duplicado)
-  it('POST /auth/register - falla si el email ya existe', async () => {
-    const res = await request(app.getHttpServer()).post('/auth/register').send({
-      name: 'Test User',
-      email: 'test@example.com', // Usar un email fijo para esta prueba
-      password: '12345678',
-      phone: '123456789',
-      idRole: 1,
-    });
+  it('POST /api/auth/register - falla si el email ya existe', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'test@example.com', // Usar un email fijo para esta prueba
+        password: '12345678',
+        phone: '123456789',
+        idRole: 1,
+      });
 
     expect(res.status).toBe(HttpStatus.CREATED); // Usuario registrado exitosamente
 
     // Intentar registrar el mismo email
     const duplicateRes = await request(app.getHttpServer())
-      .post('/auth/register')
+      .post('/api/auth/register')
       .send({
         name: 'Test User',
         email: 'test@example.com', // Email duplicado
@@ -99,59 +104,65 @@ describe('AuthController and validations (e2e)', () => {
   });
 
   // Test: Login con email incorrecto
-  it('POST /auth/login - falla con email incorrecto', async () => {
-    const res = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'inexistente@example.com', // Email que no existe en la base de datos
-      password: '12345678',
-    });
+  it('POST /api/auth/login - falla con email incorrecto', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: 'inexistente@example.com', // Email que no existe en la base de datos
+        password: '12345678',
+      });
 
     expect(res.status).toBe(HttpStatus.UNAUTHORIZED); // Esperamos un error 401 (No autorizado)
     expect(res.body.message).toMatch(/credentials/i); // El mensaje debe mencionar que las credenciales son incorrectas
   });
 
   // Test: Login con contraseña incorrecta
-  it('POST /auth/login - falla con contraseña incorrecta', async () => {
-    const res = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'test@example.com',
-      password: 'contraseñaIncorrecta', // Contraseña incorrecta
-    });
+  it('POST /api/auth/login - falla con contraseña incorrecta', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'contraseñaIncorrecta', // Contraseña incorrecta
+      });
 
     expect(res.status).toBe(HttpStatus.UNAUTHORIZED); // Error 401 (No autorizado)
     expect(res.body.message).toMatch(/credentials/i); // Mensaje de error indicando que las credenciales no son válidas
   });
 
   // Test: Login exitoso y generación de JWT
-  it('POST /auth/login - genera un JWT', async () => {
-    const res = await request(app.getHttpServer()).post('/auth/login').send({
-      email: uniqueEmail,
-      password: '12345678',
-    });
+  it('POST /api/auth/login - genera un JWT', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({
+        email: uniqueEmail,
+        password: '12345678',
+      });
 
     expect(res.status).toBe(HttpStatus.OK); // Esperamos un código 200 (OK)
-    expect(res.body).toHaveProperty('token'); // Verificar que se generó un token JWT
-    jwtToken = res.body.token; // Guardar el token para pruebas de acceso a rutas protegidas
+    expect(res.body).toHaveProperty('access_token'); // Verificar que se generó un token JWT
+    jwtToken = res.body.access_token; // Guardar el token para pruebas de acceso a rutas protegidas
   });
 
   // Test: Acceso a endpoint protegido sin token
-  it('GET /users/:id - falla sin token', async () => {
+  it('GET /api/users/:id - falla sin token', async () => {
     const res = await request(app.getHttpServer()).get(
-      `/users/${createdUserId}`,
+      `/api/users/${createdUserId}`,
     );
     expect(res.status).toBe(HttpStatus.UNAUTHORIZED); // Debe fallar con un error 401 (No autorizado)
   });
 
   // Test: Acceso a endpoint protegido con JWT inválido
-  it('GET /users/:id - falla con token inválido', async () => {
+  it('GET /api/users/:id - falla con token inválido', async () => {
     const res = await request(app.getHttpServer())
-      .get(`/users/${createdUserId}`)
+      .get(`/api/users/${createdUserId}`)
       .set('Authorization', `Bearer tokenInvalido`); // Token inválido
     expect(res.status).toBe(HttpStatus.UNAUTHORIZED); // Error 401 (No autorizado)
   });
 
   // Test: Acceso a endpoint protegido con JWT válido
-  it('GET /users/:id - accede a un endpoint protegido con JWT', async () => {
+  it('GET /api/users/:id - accede a un endpoint protegido con JWT', async () => {
     const res = await request(app.getHttpServer())
-      .get(`/users/${createdUserId}`)
+      .get(`/api/users/${createdUserId}`)
       .set('Authorization', `Bearer ${jwtToken}`); // Token JWT válido
     expect(res.status).toBe(HttpStatus.OK); // Respuesta exitosa (200 OK)
     expect(res.body).toHaveProperty('idUser', createdUserId); // Verificar que los datos del usuario coincidan

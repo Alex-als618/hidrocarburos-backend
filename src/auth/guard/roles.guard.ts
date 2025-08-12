@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RoleEnum } from 'src/common/enums/role.enum';
+import { User } from 'src/users/entities/user.entity';
 
 /**
  * Guard para controlar acceso basado en roles definidos en el decorador @Roles.
@@ -22,14 +23,18 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
 
     // Extrae el usuario del request
-    const { user } = context.switchToHttp().getRequest();
+    const { user }: { user: User } = context.switchToHttp().getRequest();
 
     if (!user || !user.role) return false;
 
+    const userRole =
+      typeof user.role === 'string' ? user.role : user.role.roleName;
+
     // Los administradores tienen acceso completo
-    if (user.role === RoleEnum.ADMIN) return true;
+    // Admin siempre puede
+    if (userRole === (RoleEnum.ADMIN as string)) return true;
 
     // Verifica si el rol del usuario está autorizado
-    return requiredRoles.includes(user.role);
+    return requiredRoles.includes(userRole as RoleEnum);
   }
 }

@@ -13,6 +13,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { TerminusModule } from '@nestjs/terminus';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { TerminusModule } from '@nestjs/terminus';
     AuthModule,
     TerminusModule,
     HealthModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

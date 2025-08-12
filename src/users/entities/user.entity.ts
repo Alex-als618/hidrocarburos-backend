@@ -31,6 +31,14 @@ export class User {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'refresh_token',
+  })
+  refreshToken?: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 

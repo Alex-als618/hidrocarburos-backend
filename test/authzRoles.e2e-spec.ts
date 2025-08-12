@@ -74,7 +74,8 @@ describe('Authorization (Admin) (e2e)', () => {
         password: userData.password,
       });
       expect(res.status).toBe(HttpStatus.OK);
-      const token = res.body.token;
+      expect(res.body).toHaveProperty('access_token');
+      const token = res.body.access_token;
       return { token, userId };
     };
 
@@ -122,3 +123,4 @@ describe('Authorization (Admin) (e2e)', () => {
     expect(res.status).toBe(HttpStatus.FORBIDDEN); // Debe fallar con 403 Forbidden
   });
 });
+
