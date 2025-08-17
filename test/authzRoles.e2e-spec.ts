@@ -34,18 +34,6 @@ describe('Authorization (Admin) (e2e)', () => {
     await roleRepo.query('TRUNCATE TABLE roles RESTART IDENTITY CASCADE');
 
     // Crear roles
-    let adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
-    if (!adminRole) {
-      await roleRepo.save({
-        roleName: 'admin',
-        description: 'Rol de administrador',
-      });
-      adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
-    }
-    if (!adminRole) {
-      throw new Error('No se pudo crear ni encontrar el rol admin');
-    }
-
     let userRole = await roleRepo.findOneBy({ roleName: 'user' });
     if (!userRole) {
       await roleRepo.save({
@@ -56,6 +44,17 @@ describe('Authorization (Admin) (e2e)', () => {
     }
     if (!userRole) {
       throw new Error('No se pudo crear ni encontrar el rol user');
+    }
+    let adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
+    if (!adminRole) {
+      await roleRepo.save({
+        roleName: 'admin',
+        description: 'Rol de administrador',
+      });
+      adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
+    }
+    if (!adminRole) {
+      throw new Error('No se pudo crear ni encontrar el rol admin');
     }
 
     // Función auxiliar para registrar y loguear usuarios
@@ -123,4 +122,3 @@ describe('Authorization (Admin) (e2e)', () => {
     expect(res.status).toBe(HttpStatus.FORBIDDEN); // Debe fallar con 403 Forbidden
   });
 });
-

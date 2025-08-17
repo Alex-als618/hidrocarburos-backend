@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoginDto } from './dto/login.dto';
@@ -12,6 +17,9 @@ import { LoginResponseDto, UserProfileDto } from './dto/login-response.dto';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
 import { ErrorHandlerService } from 'src/common/services/error-handler/error-handler.service';
+import { v4 as uuid } from 'uuid';
+import { MailService } from 'src/common/mail/mail.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +28,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly errorHandler: ErrorHandlerService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -147,5 +156,34 @@ export class AuthService {
       default:
         return 3600; // Valor predeterminado de 1 hora
     }
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    const token = uuid();
+    user.resetToken = token;
+    user.tokenExpiration = new Date(Date.now() + 3600000); // 1 hora
+
+    await this.usersService.update(user.idUser, user);
+    await this.mailService.sendPasswordReset(email, token);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<string> {
+    const user = await this.usersService.findOneByResetToken(token);
+
+    if (!user) throw new NotFoundException('Token inválido');
+    if (user.tokenExpiration < new Date())
+      throw new BadRequestException('Token expirado');
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetToken = '';
+    user.tokenExpiration = new Date(0);
+
+    await this.usersService.update(user.idUser, user);
+
+    return 'Contraseña actualizada correctamente';
   }
 }

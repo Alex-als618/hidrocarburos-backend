@@ -125,3 +125,18 @@ npm install --save @nestjs/platform-express multer
 o
 npm install --save multer
 npm install --save-dev @types/express @types/multer
+
+
+Implementar lógica de envío de correo electrónico para recuperación de contraseña.
+Dependencias instaladas
+Nodemailer – Envío de correos electrónicos
+npm install nodemailer
+
+UUID – Generación de tokens únicos
+npm install uuid
+
+Bcrypt – Encriptación de contraseñas
+npm install bcrypt
+
+Implementar pruebas unitarias con Jest para validar funcionalidades individuales.
+npm install --save-dev ts-jest @types/jest jest

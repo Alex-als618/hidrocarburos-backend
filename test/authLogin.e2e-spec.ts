@@ -22,6 +22,7 @@ describe('AuthController and validations (e2e)', () => {
   let roleRepo: Repository<Role>;
   let jwtToken: string;
   let createdUserId: number;
+  let userRole: Role | null;
 
   beforeAll(async () => {
     // Configuración inicial del módulo de pruebas
@@ -44,10 +45,17 @@ describe('AuthController and validations (e2e)', () => {
     await roleRepo.query('TRUNCATE TABLE roles RESTART IDENTITY CASCADE');
 
     // Crear un rol básico para las pruebas de autenticación
-    await roleRepo.save({
-      roleName: 'user',
-      description: 'Rol básico para pruebas',
-    });
+    userRole = await roleRepo.findOneBy({ roleName: 'user' });
+    if (!userRole) {
+      await roleRepo.save({
+        roleName: 'user',
+        description: 'Rol básico para pruebas',
+      });
+      userRole = await roleRepo.findOneBy({ roleName: 'user' });
+    }
+    if (!userRole) {
+      throw new Error('No se pudo crear ni encontrar el rol user');
+    }
   });
 
   afterAll(async () => {
@@ -66,7 +74,7 @@ describe('AuthController and validations (e2e)', () => {
         email: uniqueEmail,
         password: '12345678',
         phone: '123456789',
-        idRole: 1, // Asignación del rol de usuario
+        idRole: userRole?.idRole, // Asignación del rol de usuario
       });
 
     expect(res.status).toBe(HttpStatus.CREATED); // Esperamos un código 201 (Creado)

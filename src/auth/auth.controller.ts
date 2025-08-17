@@ -44,4 +44,13 @@ export class AuthController {
   logout(@Req() request: { user: User }) {
     return this.authService.logout(request.user.idUser);
   }
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.requestPasswordReset(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(body.token, body.newPassword);
+  }
 }
