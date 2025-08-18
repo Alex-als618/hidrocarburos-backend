@@ -123,3 +123,13 @@ export const typeormConfig = (configService: ConfigService): TypeOrmModule => ({
 /*****Implementar almacenamiento y gestión de imágenes en el servidor con Multer.
 npm install --save multer
 npm install --save-dev @types/express @types/multer
+
+
+/* Cloudinary */
+Para instalar use: npm install cloudinary @nestjs/axios multer-storage-cloudinary
+
+agregue "endOfLine": "lf" en .prettierc por un error con prettier/eslint
+Cambi a LF el editor
+En VS Code abajo a la derecha aparece CRLF.
+Haz clic y cámbialo a LF.
+Guarda el archivo y desaparecerá el warning

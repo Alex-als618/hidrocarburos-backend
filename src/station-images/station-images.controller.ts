@@ -10,6 +10,7 @@ import {
   UploadedFile,
   ParseIntPipe,
   BadRequestException,
+  ValidationPipe,
   // BadRequestException,
 } from '@nestjs/common';
 import { StationImagesService } from './station-images.service';
@@ -17,8 +18,9 @@ import { CreateStationImageDto } from './dto/create-station-image.dto';
 import { UpdateStationImageDto } from './dto/update-station-image.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import * as multer from 'multer';
-import { extname } from 'path';
+// import * as multer from 'multer';
+// import { extname } from 'path';
+// import { extname } from 'path';
 
 @Controller('station-images')
 export class StationImagesController {
@@ -66,13 +68,14 @@ export class StationImagesController {
   @UseInterceptors(FileInterceptor('imageUrl'))
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateStationImageDto: UpdateStationImageDto,
-    @UploadedFile() imageUrl: Express.Multer.File,
+    @Body(new ValidationPipe({ transform: true }))
+    updateStationImageDto: UpdateStationImageDto,
+    @UploadedFile() imageFile?: Express.Multer.File,
   ) {
     return this.stationImagesService.update(
       id,
       updateStationImageDto,
-      imageUrl,
+      imageFile,
     );
   }
 
