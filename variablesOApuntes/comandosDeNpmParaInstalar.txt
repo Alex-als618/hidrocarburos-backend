@@ -133,3 +133,4 @@ Cambi a LF el editor
 En VS Code abajo a la derecha aparece CRLF.
 Haz clic y cámbialo a LF.
 Guarda el archivo y desaparecerá el warning
+Ubicacion en cloudinary: Assets/Folders/station-images
