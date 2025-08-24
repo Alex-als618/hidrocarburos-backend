@@ -4,12 +4,15 @@ import { UpdateFuelAvailabilityDto } from './dto/update-fuel-availability.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FuelAvailability } from './entities/fuel-availability.entity';
 import { Repository } from 'typeorm';
+import { FuelAlertGateway } from 'src/notifications/gateways/fuel-alert.gateway';
 
 @Injectable()
 export class FuelAvailabilitiesService {
+  private readonly LOW_FUEL_THRESHOLD = 100;
   constructor(
     @InjectRepository(FuelAvailability)
     private readonly fuelAvailabilityRepository: Repository<FuelAvailability>,
+    private readonly fuelAlertGateway: FuelAlertGateway,
   ) {}
 
   async create(dto: CreateFuelAvailabilityDto) {
@@ -31,7 +34,24 @@ export class FuelAvailabilitiesService {
   }
 
   async update(id: number, dto: UpdateFuelAvailabilityDto) {
+    const availabilityToUpdate = await this.fuelAvailabilityRepository.findOne({
+      where: { idFuelAvailability: id },
+      relations: ['fuelStation'],
+    });
+
+    if (!availabilityToUpdate) {
+      return { message: 'No encontrado' };
+    }
     await this.fuelAvailabilityRepository.update(id, dto);
+    if (
+      dto.availableQuantity !== undefined &&
+      dto.availableQuantity < this.LOW_FUEL_THRESHOLD
+    ) {
+      this.fuelAlertGateway.sendLowFuelAlert(
+        availabilityToUpdate.fuelStation.idFuelStation,
+        dto.availableQuantity,
+      );
+    }
     return this.findOne(id);
   }
 

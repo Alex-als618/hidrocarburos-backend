@@ -21,7 +21,7 @@ Backend para la gestión de estaciones de combustible. Permite a usuarios consul
 - **DRY**: Sin duplicación de lógica.
 - **KISS**: Diseño simple y directo.
 - **YAGNI**: Solo se implementa lo necesario.
-- **Clean Code**: Código legible, modular y mantenible.
+- **Clean Code**: Código legible, modular y mantenible, comentarios cuando sea necesario y usar la extenvion de vscode Better Comments
 
 ## 4. Arquitectura General
 
@@ -48,4 +48,5 @@ NestJS permite inyectar dependencias y estructurar los módulos de forma aislada
 - Manejo de archivos controlado con `multer`.
 
 ## 8. Mantenimiento del Documento
+
 Este diseño técnico debe actualizarse conforme evoluciona la arquitectura del sistema y los módulos implementados.
