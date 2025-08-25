@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { FuelStationsService } from './fuel-stations.service';
 import { CreateFuelStationDto } from './dto/create-fuel-station.dto';
@@ -20,9 +21,12 @@ export class FuelStationsController {
     return this.fuelStationsService.create(createFuelStationDto);
   }
 
+  //  paginación
   @Get()
-  findAll() {
-    return this.fuelStationsService.findAll();
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    return this.fuelStationsService.findAllPaginated(pageNumber, limitNumber);
   }
 
   @Get(':id')

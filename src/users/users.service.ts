@@ -35,4 +35,18 @@ export class UsersService {
   remove(id: number) {
     return `This action removes a #${id} user`;
   }
+
+  async findAllPaginated(page: number, limit: number) {
+    const [data, total] = await this.userRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
 }

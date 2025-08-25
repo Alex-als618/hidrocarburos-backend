@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { StationImagesService } from './station-images.service';
 import { CreateStationImageDto } from './dto/create-station-image.dto';
@@ -20,9 +21,12 @@ export class StationImagesController {
     return this.stationImagesService.create(createStationImageDto);
   }
 
+  // ✅ Paginación
   @Get()
-  findAll() {
-    return this.stationImagesService.findAll();
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    return this.stationImagesService.findAllPaginated(pageNumber, limitNumber);
   }
 
   @Get(':id')

@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,8 +22,11 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async getAllUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    return this.usersService.findAllPaginated(pageNumber, limitNumber);
   }
 
   @Get(':id')
