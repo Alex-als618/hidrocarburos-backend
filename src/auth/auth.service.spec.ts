@@ -11,6 +11,7 @@ describe('AuthService', () => {
   let authService: AuthService;
   let usersService: Partial<UsersService>;
   let jwtService: Partial<JwtService>;
+  let errorHandlerService: Partial<ErrorHandlerService>;
 
   // Mock de estación (si es usado por usuario)
   const mockFuelStation = {
@@ -36,9 +37,11 @@ describe('AuthService', () => {
     idUser: 1,
     email: 'test@example.com',
     password: 'oldHash',
+    fullName: 'Test User Test', // Add fullName to mockUser
     resetToken: 'valid-token',
     tokenExpiration: new Date(Date.now() + 10000),
     name: 'Test User',
+    lastname: 'Test',
     phone: '123456789',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -60,18 +63,27 @@ describe('AuthService', () => {
       .spyOn(bcrypt, 'hash')
       .mockResolvedValue('newHashedPassword123' as never);
 
+    // Mock the findOneByResetToken to return a user with fullName
     usersService = {
-      findOneByResetToken: jest.fn().mockResolvedValue({ ...mockUser }),
+      findOneByResetToken: jest
+        .fn()
+        .mockResolvedValue({ ...mockUser, fullName: 'Test User Test' }), // Ensure fullName is present
       update: jest
         .fn()
         .mockResolvedValue({ ...mockUser, password: 'newHashedPassword123' }),
       findOneByEmail: jest.fn().mockResolvedValue(mockUser),
       create: jest.fn().mockResolvedValue(mockUser),
+      // Add findOne to usersService mock if it's used in auth.service
+      findOne: jest.fn().mockResolvedValue(mockUser),
     };
 
     jwtService = {
       sign: jest.fn(),
       verify: jest.fn(),
+    };
+
+    errorHandlerService = {
+      handleError: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -84,7 +96,7 @@ describe('AuthService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string) => {
-              if (key === 'JWT_SECRET') return 'test-secret';
+              if (key === 'JWT_SECRET') return 'test-secret'; // Ensure JWT_SECRET is provided
               if (key === 'JWT_EXPIRES_IN') return '1h';
               return null;
             }),
@@ -92,9 +104,7 @@ describe('AuthService', () => {
         },
         {
           provide: ErrorHandlerService,
-          useValue: {
-            handleError: jest.fn(),
-          },
+          useValue: errorHandlerService,
         },
       ],
     }).compile();

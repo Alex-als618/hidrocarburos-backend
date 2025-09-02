@@ -1,18 +1,23 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-
-// import { AppDataSource } from './data-source';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(
     AppModule /*, { cors: true }*/,
   );
-  app.setGlobalPrefix('api');
+  //const app = await NestFactory.create(AppModule);
+  const logger = new Logger(AppModule.name);
+  const configService = app.get(ConfigService);
+  // Global prefix desde .env
+  const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
+  app.setGlobalPrefix(apiPrefix);
 
   //SEEDER
   // AppDataSource.initialize()
@@ -32,7 +37,6 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
 
-  // Validación de datos global
   // para todos
   //app.enableCors({});
 
@@ -50,13 +54,33 @@ async function bootstrap() {
     { prefix: '/uploads/images/station-images/' },
   );
 
+  if (configService.get<string>('NODE_ENV') !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Fuel Station API')
+      .setDescription('API para gestión de estaciones de combustible')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
+
+  // Configuración de validación de datos global
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
     }),
   );
-  await app.listen(process.env.PORT ?? 3000);
+
+  // Iniciar el servidor
+  const port = configService.get<number>('PORT', 3001);
+  await app.listen(port);
+
+  Logger.log(`🚀 Application running on: http://localhost:${port}`);
+  logger.log(`📍 API Base URL: http://localhost:${port}/${apiPrefix}`);
+  logger.log(`📚 Swagger Docs: http://localhost:${port}/docs`);
 }
 bootstrap().catch((err) => {
   console.error('Error al iniciar la aplicación:', err);

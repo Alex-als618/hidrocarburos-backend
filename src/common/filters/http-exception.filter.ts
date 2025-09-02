@@ -3,10 +3,10 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { getErrorDetails } from './error.util';
 
 // Este decorador indica que el filtro captura cualquier excepción
 @Catch()
@@ -19,34 +19,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
       .httpAdapter as ExpressAdapter;
     const ctx = host.switchToHttp(); // Obtiene el contexto HTTP
 
-    // Determina el código de estado HTTP
-    const httpStatus =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const { status, message, errorCode, details } = getErrorDetails(exception);
 
-    // Mensaje por defecto
-    let message: string | string[] = 'Internal Server Error';
-
-    // Si es una excepción conocida (HttpException), extrae el mensaje
-    if (exception instanceof HttpException) {
-      const response = exception.getResponse();
-      message =
-        typeof response === 'object' && response['message']
-          ? String(response['message']) // Muestra mensajes de validación si existen
-          : String(exception.message);
-    }
-
-    // Construye el cuerpo de la respuesta
     const responseBody = {
-      statusCode: httpStatus,
+      statusCode: status,
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
       error: exception instanceof HttpException ? exception.name : 'Error',
       message,
+      errorCode,
+      ...(details && { details }), // Solo incluye si existe
     };
 
+    if (process.env.NODE_ENV === 'development' && exception instanceof Error) {
+      responseBody.stack = exception.stack;
+    }
+
     // Envía la respuesta al cliente
-    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+    httpAdapter.reply(ctx.getResponse(), responseBody, status);
   }
 }

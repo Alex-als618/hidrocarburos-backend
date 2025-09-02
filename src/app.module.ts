@@ -27,7 +27,7 @@ import { CommonModule } from './common/common.module';
       inject: [ConfigService],
     }),
     // Configuración del módulo Throttler para la limitación de tasas de peticiones (Rate Limiting).
-    // // Limita las peticiones por minuto por cliente, ayudando a prevenir ataques de denegación de servicio (DoS).
+    //Limita las peticiones por minuto por cliente, ayudando a prevenir ataques de denegación de servicio (DoS).
     ThrottlerModule.forRoot({
       throttlers: [
         {
