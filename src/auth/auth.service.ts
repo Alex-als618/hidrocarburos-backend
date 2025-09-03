@@ -16,7 +16,6 @@ import { JwtPayload } from './interfaces/auth.interfaces';
 import { LoginResponseDto, UserProfileDto } from './dto/login-response.dto';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
-import { ErrorHandlerService } from 'src/common/services/error-handler/error-handler.service';
 import { v4 as uuid } from 'uuid';
 import { MailService } from 'src/common/mail/mail.service';
 import * as bcrypt from 'bcrypt';
@@ -27,20 +26,15 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly errorHandler: ErrorHandlerService,
     private readonly mailService: MailService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
-    try {
-      const user = await this.usersService.create(createUserDto);
-      return {
-        message: 'User created successfully',
-        user,
-      };
-    } catch (error) {
-      this.errorHandler.handleError(error);
-    }
+    const user = await this.usersService.create(createUserDto);
+    return {
+      message: 'User created successfully',
+      user,
+    };
   }
 
   async login(loginDto: LoginDto): Promise<LoginResponseDto> {
@@ -90,12 +84,8 @@ export class AuthService {
 
   //
   async logout(userId: number) {
-    try {
-      await this.usersService.update(userId, { refreshToken: undefined });
-      return { message: 'Logout successful' };
-    } catch (error) {
-      this.errorHandler.handleError(error);
-    }
+    await this.usersService.update(userId, { refreshToken: undefined });
+    return { message: 'Logout successful' };
   }
 
   // Construye el objeto de respuesta del login con token y perfil

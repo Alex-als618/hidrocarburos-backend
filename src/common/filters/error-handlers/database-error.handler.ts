@@ -1,203 +1,166 @@
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 
-/**
- * 🔍 DETECTOR DE ERRORES DE BASE DE DATOS
- */
-export function isDatabaseError(exception: any): boolean {
-  return (
-    exception &&
-    typeof exception === 'object' &&
-    'code' in exception! &&
-    typeof (exception as any).code === 'string'
-  );
-}
+export const POSTGRES_ERROR_CODES = {
+  UNIQUE_VIOLATION: '23505',
+  FOREIGN_KEY_VIOLATION: '23503',
+  NOT_NULL_VIOLATION: '23502',
+  STRING_DATA_RIGHT_TRUNCATION: '22001',
+  CHECK_VIOLATION: '23514',
+  INVALID_TEXT_REPRESENTATION: '22P02',
+  DIVISION_BY_ZERO: '22012',
+  CONNECTION_FAILURE: '08006',
+} as const;
 
-/**
- * 🗄️ MANEJADOR DE ERRORES DE POSTGRESQL
- * Convierte códigos de error PostgreSQL a mensajes específicos para tu proyecto
- */
-export function handleDatabaseError(error: any): {
+type PostgresErrorCode =
+  (typeof POSTGRES_ERROR_CODES)[keyof typeof POSTGRES_ERROR_CODES];
+
+interface DatabaseErrorResponse {
   status: number;
   message: string;
   errorCode: string;
-} {
-  switch (error.code) {
-    // ✅ VIOLACIÓN DE CONSTRAINT ÚNICO (duplicados)
-    case '23505':
-      return {
-        status: HttpStatus.CONFLICT,
-        message: getUniqueViolationMessage(error),
-        errorCode: 'DUPLICATE_ENTRY',
-      };
-
-    // ✅ VIOLACIÓN DE FOREIGN KEY
-    case '23503':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: getForeignKeyViolationMessage(error),
-        errorCode: 'FOREIGN_KEY_VIOLATION',
-      };
-
-    // ✅ CAMPO REQUERIDO NULO
-    case '23502':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: getNullViolationMessage(error),
-        errorCode: 'MISSING_REQUIRED_FIELDS',
-      };
-
-    // ✅ DATOS DEMASIADO LARGOS
-    case '22001':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Los datos son demasiado largos para el campo',
-        errorCode: 'DATA_TOO_LONG',
-      };
-
-    // ✅ VIOLACIÓN DE CHECK CONSTRAINT
-    case '23514':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Los datos no cumplen las restricciones definidas',
-        errorCode: 'CHECK_VIOLATION',
-      };
-
-    // ✅ TIPO DE DATO INVÁLIDO
-    case '22P02':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Tipo de dato inválido en la consulta',
-        errorCode: 'INVALID_DATA_TYPE',
-      };
-
-    // ✅ DIVISIÓN POR CERO
-    case '22012':
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'División por cero en operación matemática',
-        errorCode: 'DIVISION_BY_ZERO',
-      };
-
-    // ✅ CONEXIÓN PERDIDA
-    case '08006':
-      return {
-        status: HttpStatus.SERVICE_UNAVAILABLE,
-        message: 'Conexión con la base de datos perdida',
-        errorCode: 'CONNECTION_LOST',
-      };
-
-    // ✅ ERROR NO MANEJADO ESPECÍFICAMENTE
-    default:
-      this.logger.error('Error de base de datos no manejado:', {
-        code: error.code,
-        message: error.message,
-        detail: error.detail,
-        constraint: error.constraint,
-      });
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Error en la base de datos',
-        errorCode: 'DATABASE_ERROR',
-      };
-  }
 }
 
-/**
- * 📝 GENERADOR DE MENSAJES ESPECÍFICOS PARA CONSTRAINT ÚNICO
- * Basado en tus entities específicas
- */
-export function getUniqueViolationMessage(error: any): string {
-  const detail = error.detail || '';
-  const constraint = error.constraint || '';
+const logger = new Logger('DatabaseErrorHandler');
 
-  // ✅ USERS - Email duplicado
-  if (detail.includes('email') || constraint.includes('email')) {
-    return 'Ya existe un usuario registrado con este email';
-  }
-
-  // ✅ USERS - Documento duplicado
-  if (
-    detail.includes('document_number') ||
-    constraint.includes('document_number')
-  ) {
-    return 'Ya existe un usuario con este número de documento';
-  }
-
-  // ✅ PRODUCTS - Nombre duplicado
-  if (
-    detail.includes('products') &&
-    (detail.includes('name') || constraint.includes('name'))
-  ) {
-    return 'Ya existe un producto con este nombre';
-  }
-
-  // ✅ PRODUCTS - Slug duplicado
-  if (detail.includes('slug') || constraint.includes('slug')) {
-    return 'Ya existe un producto con esta URL (slug)';
-  }
-
-  // ✅ CATEGORIES - Nombre duplicado
-  if (
-    detail.includes('categories') &&
-    (detail.includes('name') || constraint.includes('name'))
-  ) {
-    return 'Ya existe una categoría con este nombre';
-  }
-
-  // ✅ ROLES - Nombre duplicado
-  if (
-    detail.includes('roles') &&
-    (detail.includes('name') || constraint.includes('name'))
-  ) {
-    return 'Ya existe un rol con este nombre';
-  }
-
-  // ✅ Mensaje genérico
-  return 'Ya existe un registro con estos datos';
+export function isDatabaseError(
+  exception: unknown,
+): exception is Record<string, unknown> {
+  return (
+    typeof exception === 'object' &&
+    exception !== null &&
+    'code' in exception &&
+    typeof (exception as Record<string, unknown>).code === 'string'
+  );
 }
 
-/**
- * 🔗 GENERADOR DE MENSAJES PARA FOREIGN KEY
- */
-export function getForeignKeyViolationMessage(error: any): string {
-  const detail = error.detail || '';
-  const constraint = error.constraint || '';
+// Mensajes por constraint únicos
+const UNIQUE_CONSTRAINT_MESSAGES: Record<string, string> = {
+  users_email_key: 'Ya existe un usuario registrado con este email',
+  fuel_types_fuel_name_key: 'Ya existe un tipo de combustible con este nombre',
+  fuel_stations_name_key: 'Ya existe una estación con este nombre',
+  user_station_notifications_id_user_id_fuel_station_key:
+    'Ya existe una suscripción para este usuario y estación',
+  fuel_availability_id_fuel_station_id_fuel_type_key:
+    'Ya existe una disponibilidad registrada para esta estación y tipo de combustible',
+};
 
-  if (constraint.includes('category') || detail.includes('category')) {
-    return 'La categoría especificada no existe';
-  }
+// Mensajes de foreign key
+const FOREIGN_KEY_MESSAGES: Record<string, string> = {
+  users_id_role_fkey: 'El rol especificado no existe',
+  users_id_fuel_station_fkey: 'La estación asignada al usuario no existe',
+  fuel_availability_id_fuel_station_fkey: 'La estación especificada no existe',
+  fuel_availability_id_fuel_type_fkey:
+    'El tipo de combustible especificado no existe',
+  station_images_id_fuel_station_fkey: 'La estación de la imagen no existe',
+};
 
-  if (constraint.includes('role') || detail.includes('role')) {
-    return 'El rol especificado no existe';
-  }
+// Campos NOT NULL
+const NOT_NULL_MESSAGES: Record<string, string> = {
+  name: 'El nombre es obligatorio',
+  email: 'El email es obligatorio',
+  password: 'La contraseña es obligatoria',
+  fuel_name: 'El nombre del combustible es obligatorio',
+  available_quantity: 'La cantidad disponible es obligatoria',
+  id_fuel_station: 'La estación de servicio es obligatoria',
+  id_fuel_type: 'El tipo de combustible es obligatorio',
+  id_role: 'El rol es obligatorio',
+};
 
-  if (constraint.includes('product') || detail.includes('product')) {
-    return 'El producto especificado no existe';
-  }
+export function handleDatabaseError(
+  error: Record<string, unknown>,
+): DatabaseErrorResponse {
+  const code = error.code as PostgresErrorCode;
+  const constraint = (error.constraint as string) || '';
+  const column = (error.column as string) || '';
 
-  if (constraint.includes('user') || detail.includes('user')) {
-    return 'El usuario especificado no existe';
-  }
+  const handlers: Partial<
+    Record<PostgresErrorCode, () => DatabaseErrorResponse>
+  > = {
+    [POSTGRES_ERROR_CODES.UNIQUE_VIOLATION]: () => ({
+      status: HttpStatus.CONFLICT,
+      message: getMessage(
+        UNIQUE_CONSTRAINT_MESSAGES,
+        constraint,
+        'Registro duplicado',
+      ),
+      errorCode: 'DUPLICATE_ENTRY',
+    }),
 
-  return 'Referencia a datos que no existen en el sistema';
-}
+    [POSTGRES_ERROR_CODES.FOREIGN_KEY_VIOLATION]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: getMessage(
+        FOREIGN_KEY_MESSAGES,
+        constraint,
+        'Referencia a datos inexistentes',
+      ),
+      errorCode: 'FOREIGN_KEY_VIOLATION',
+    }),
 
-/**
- * ❌ GENERADOR DE MENSAJES PARA CAMPOS NULOS
- */
-export function getNullViolationMessage(error: any): string {
-  const column = error.column || '';
+    [POSTGRES_ERROR_CODES.NOT_NULL_VIOLATION]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: getMessage(
+        NOT_NULL_MESSAGES,
+        column,
+        `El campo ${column} es obligatorio`,
+      ),
+      errorCode: 'MISSING_REQUIRED_FIELDS',
+    }),
 
-  const fieldMessages: Record<string, string> = {
-    email: 'El email es obligatorio',
-    password: 'La contraseña es obligatoria',
-    full_name: 'El nombre completo es obligatorio',
-    document_number: 'El número de documento es obligatorio',
-    name: 'El nombre es obligatorio',
-    price: 'El precio es obligatorio',
-    category_id: 'La categoría es obligatoria',
-    role_id: 'El rol es obligatorio',
+    [POSTGRES_ERROR_CODES.STRING_DATA_RIGHT_TRUNCATION]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: 'Los datos son demasiado largos para el campo',
+      errorCode: 'DATA_TOO_LONG',
+    }),
+
+    [POSTGRES_ERROR_CODES.CHECK_VIOLATION]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: 'Los datos no cumplen las restricciones definidas',
+      errorCode: 'CHECK_VIOLATION',
+    }),
+
+    [POSTGRES_ERROR_CODES.INVALID_TEXT_REPRESENTATION]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: 'Tipo de dato inválido en la consulta',
+      errorCode: 'INVALID_DATA_TYPE',
+    }),
+
+    [POSTGRES_ERROR_CODES.DIVISION_BY_ZERO]: () => ({
+      status: HttpStatus.BAD_REQUEST,
+      message: 'División por cero en operación matemática',
+      errorCode: 'DIVISION_BY_ZERO',
+    }),
+
+    [POSTGRES_ERROR_CODES.CONNECTION_FAILURE]: () => ({
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      message: 'Conexión con la base de datos perdida',
+      errorCode: 'CONNECTION_LOST',
+    }),
   };
 
-  return fieldMessages[column] || `El campo ${column} es obligatorio`;
+  const handler = handlers[code];
+
+  if (handler) {
+    return handler();
+  }
+
+  logger.error('Error de base de datos no manejado', {
+    code,
+    message: error.message,
+    detail: error.detail,
+    constraint,
+  });
+
+  return {
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    message: 'Error en la base de datos',
+    errorCode: 'DATABASE_ERROR',
+  };
+}
+
+function getMessage(
+  map: Record<string, string>,
+  key: string,
+  fallback: string,
+): string {
+  return map[key] || fallback;
 }

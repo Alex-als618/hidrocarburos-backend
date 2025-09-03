@@ -5,13 +5,11 @@ import { MailService } from '../common/mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ErrorHandlerService } from '../common/services/error-handler/error-handler.service';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let usersService: Partial<UsersService>;
   let jwtService: Partial<JwtService>;
-  let errorHandlerService: Partial<ErrorHandlerService>;
 
   // Mock de estación (si es usado por usuario)
   const mockFuelStation = {
@@ -82,10 +80,6 @@ describe('AuthService', () => {
       verify: jest.fn(),
     };
 
-    errorHandlerService = {
-      handleError: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -101,10 +95,6 @@ describe('AuthService', () => {
               return null;
             }),
           },
-        },
-        {
-          provide: ErrorHandlerService,
-          useValue: errorHandlerService,
         },
       ],
     }).compile();

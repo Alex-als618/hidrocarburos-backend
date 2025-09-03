@@ -1,234 +1,225 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+// src/common/filters/error-handlers/generic-error.handler.ts
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 
-/**
- * 📨 MANEJADOR DE HTTPEXCEPTION
- * Errores lanzados manualmente con throw new NotFoundException(), etc.
- */
-export function handleHttpException(exception: HttpException): {
+// ---------- Interfaces ----------
+export interface GenericErrorResponse {
   status: number;
   message: string;
-  details?: any;
-} {
+  errorCode: string;
+  details?: unknown;
+}
+
+// ---------- Constantes ----------
+const ERROR_CODES = {
+  HTTP: 'HTTP_EXCEPTION',
+  VALIDATION: 'VALIDATION_ERROR',
+  ENTITY_VALIDATION: 'ENTITY_VALIDATION_ERROR',
+  TRANSFORM: 'TRANSFORMATION_ERROR',
+  TYPEORM: 'TYPEORM_ERROR',
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  AUTH: 'AUTH_ERROR',
+  INTERNAL: 'INTERNAL_ERROR',
+} as const;
+
+const logger = new Logger('GenericErrorHandler');
+
+// ---------- Helpers ----------
+function matchesIndicators(exception: Error, indicators: string[]): boolean {
+  const name = exception.name.toLowerCase();
+  const msg = exception.message.toLowerCase();
+  return indicators.some(
+    (i) => name.includes(i.toLowerCase()) || msg.includes(i.toLowerCase()),
+  );
+}
+
+function buildResponse(
+  status: number,
+  message: string,
+  errorCode: string,
+  details?: unknown,
+): GenericErrorResponse {
+  return {
+    status,
+    message,
+    errorCode,
+    ...(details ? { details } : {}),
+  };
+}
+
+// ---------- Handlers ----------
+export function handleHttpException(
+  exception: HttpException,
+): GenericErrorResponse {
   const status = exception.getStatus();
   const response = exception.getResponse();
 
   let message: string;
-  let details: any;
+  let details: unknown;
 
   if (typeof response === 'string') {
     message = response;
   } else if (typeof response === 'object' && response !== null) {
-    const responseObj = response as any;
-
-    // ✅ Para errores de validación con múltiples mensajes
-    if (Array.isArray(responseObj.message)) {
+    const resObj = response as Record<string, unknown>;
+    if (Array.isArray(resObj.message)) {
       message = 'Errores de validación';
-      details = responseObj.message;
+      details = resObj.message;
     } else {
-      message = responseObj.message || responseObj.error || exception.message;
-      details = responseObj.details;
+      message =
+        (resObj.message as string) ||
+        (resObj.error as string) ||
+        exception.message;
+      details = resObj.details;
     }
   } else {
     message = exception.message;
   }
 
-  return { status, message, details };
+  return buildResponse(status, message, ERROR_CODES.HTTP, details);
 }
 
-/**
- * ✅ DETECTOR DE ERRORES DE VALIDACIÓN
- */
-export function isValidationError(exception: any): boolean {
-  if (Array.isArray(exception)) {
-    return exception.every((e) => 'property' in e && 'constraints' in e);
+export function handleValidationError(error: Error): GenericErrorResponse {
+  return buildResponse(
+    HttpStatus.BAD_REQUEST,
+    'Los datos enviados no son válidos',
+    ERROR_CODES.VALIDATION,
+    error.message,
+  );
+}
+
+export function handleEntityValidationError(
+  error: Error,
+): GenericErrorResponse {
+  return buildResponse(
+    HttpStatus.BAD_REQUEST,
+    error.message,
+    ERROR_CODES.ENTITY_VALIDATION,
+  );
+}
+
+export function handleTransformationError(error: Error): GenericErrorResponse {
+  return buildResponse(
+    HttpStatus.BAD_REQUEST,
+    'Error en la transformación de datos',
+    ERROR_CODES.TRANSFORM,
+    error.message,
+  );
+}
+
+export function handleTypeOrmError(error: Error): GenericErrorResponse {
+  return buildResponse(
+    HttpStatus.INTERNAL_SERVER_ERROR,
+    'Error en la consulta a la base de datos',
+    ERROR_CODES.TYPEORM,
+    error.message,
+  );
+}
+
+export function handleAuthError(error: Error): GenericErrorResponse {
+  const msg = error.message.toLowerCase();
+
+  if (msg.includes('jwt') || msg.includes('token')) {
+    return buildResponse(
+      HttpStatus.UNAUTHORIZED,
+      'Token de autenticación inválido o expirado',
+      ERROR_CODES.INVALID_TOKEN,
+    );
+  }
+  if (msg.includes('unauthorized')) {
+    return buildResponse(
+      HttpStatus.UNAUTHORIZED,
+      'Credenciales de acceso inválidas',
+      ERROR_CODES.UNAUTHORIZED,
+    );
+  }
+  if (msg.includes('forbidden')) {
+    return buildResponse(
+      HttpStatus.FORBIDDEN,
+      'No tienes permisos para realizar esta acción',
+      ERROR_CODES.FORBIDDEN,
+    );
+  }
+  return buildResponse(
+    HttpStatus.UNAUTHORIZED,
+    'Error de autenticación',
+    ERROR_CODES.AUTH,
+  );
+}
+
+// ---------- Mapa de detección ----------
+type HandlerEntry = {
+  check: (e: Error) => boolean;
+  handle: (e: Error) => GenericErrorResponse;
+};
+
+const HANDLERS: HandlerEntry[] = [
+  {
+    check: (e) => e instanceof HttpException,
+    handle: (e) => handleHttpException(e as HttpException),
+  },
+  {
+    check: (e) =>
+      matchesIndicators(e, ['ValidationError', 'Bad Request Exception']),
+    handle: handleValidationError,
+  },
+  {
+    check: (e) =>
+      matchesIndicators(e, ['must be between', 'greater than', 'less than']),
+    handle: handleEntityValidationError,
+  },
+  {
+    check: (e) => matchesIndicators(e, ['transform', 'convert', 'cast']),
+    handle: handleTransformationError,
+  },
+  {
+    check: (e) =>
+      matchesIndicators(e, [
+        'TypeORM',
+        'QueryFailed',
+        'Repository',
+        'relation',
+        'entity',
+      ]),
+    handle: handleTypeOrmError,
+  },
+  {
+    check: (e) =>
+      matchesIndicators(e, [
+        'Unauthorized',
+        'Forbidden',
+        'jwt',
+        'token',
+        'authentication',
+        'authorization',
+        'JsonWebToken',
+      ]),
+    handle: handleAuthError,
+  },
+];
+
+// ---------- Punto de entrada ----------
+export function handleGenericError(exception: unknown): GenericErrorResponse {
+  if (!(exception instanceof Error)) {
+    return buildResponse(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      'Error interno del servidor',
+      ERROR_CODES.INTERNAL,
+    );
   }
 
-  if (!(exception instanceof Error)) return false;
+  const found = HANDLERS.find((h) => h.check(exception));
+  if (found) return found.handle(exception);
 
-  const validationIndicators = [
-    'ValidationError',
-    'validate',
-    'validation failed',
-    'Bad Request Exception',
-  ];
+  logger.error('Unhandled exception', {
+    name: exception.name,
+    message: exception.message,
+    stack: exception.stack,
+  });
 
-  return validationIndicators.some(
-    (indicator) =>
-      exception.name.includes(indicator) ||
-      exception.message.toLowerCase().includes(indicator.toLowerCase()),
+  return buildResponse(
+    HttpStatus.INTERNAL_SERVER_ERROR,
+    'Error interno del servidor',
+    ERROR_CODES.INTERNAL,
   );
-}
-
-/**
- * 📋 MANEJADOR DE ERRORES DE VALIDACIÓN
- */
-export function handleValidationError(error: Error): {
-  status: number;
-  message: string;
-  errorCode: string;
-  details?: any;
-} {
-  return {
-    status: HttpStatus.BAD_REQUEST,
-    message: 'Los datos enviados no son válidos',
-    errorCode: 'VALIDATION_ERROR',
-    details: error.message,
-  };
-}
-
-/**
- * 🏗️ DETECTOR DE ERRORES DE ENTITY
- */
-export function isEntityValidationError(exception: unknown): boolean {
-  if (!(exception instanceof Error)) return false;
-
-  const entityErrorIndicators = [
-    'El porcentaje debe estar entre',
-    'El monto fijo debe ser mayor',
-    'Percentage must be between',
-    'Fixed amount must be greater',
-    'must be between',
-    'greater than',
-    'less than',
-  ];
-
-  return entityErrorIndicators.some((indicator) =>
-    exception.message.includes(indicator),
-  );
-}
-
-/**
- * 🏗️ MANEJADOR DE ERRORES DE ENTITY
- */
-export function handleEntityValidationError(error: Error): {
-  status: number;
-  message: string;
-  errorCode: string;
-} {
-  return {
-    status: HttpStatus.BAD_REQUEST,
-    message: error.message,
-    errorCode: 'ENTITY_VALIDATION_ERROR',
-  };
-}
-
-/**
- * 🔄 DETECTOR DE ERRORES DE TRANSFORMACIÓN
- */
-export function isTransformationError(exception: unknown): boolean {
-  if (!(exception instanceof Error)) return false;
-
-  return (
-    exception.name.includes('Transform') ||
-    exception.message.includes('transform') ||
-    exception.message.includes('convert') ||
-    exception.message.includes('cast')
-  );
-}
-
-/**
- * 🔄 MANEJADOR DE ERRORES DE TRANSFORMACIÓN
- */
-export function handleTransformationError(error: Error): {
-  status: number;
-  message: string;
-  errorCode: string;
-} {
-  return {
-    status: HttpStatus.BAD_REQUEST,
-    message: 'Error en la transformación de datos',
-    errorCode: 'TRANSFORMATION_ERROR',
-  };
-}
-
-/**
- * 🔍 DETECTOR DE ERRORES DE TYPEORM
- */
-export function isTypeOrmError(exception: unknown): boolean {
-  if (!(exception instanceof Error)) return false;
-
-  return (
-    exception.name.includes('TypeORM') ||
-    exception.name.includes('QueryFailed') ||
-    exception.name.includes('Repository') ||
-    exception.message.includes('relation') ||
-    exception.message.includes('entity')
-  );
-}
-
-/**
- * 🔍 MANEJADOR DE ERRORES DE TYPEORM
- */
-export function handleTypeOrmError(error: any): {
-  status: number;
-  message: string;
-  errorCode: string;
-} {
-  return {
-    status: HttpStatus.INTERNAL_SERVER_ERROR,
-    message: 'Error en la consulta a la base de datos',
-    errorCode: 'TYPEORM_ERROR',
-  };
-}
-
-/**
- * 🔐 DETECTOR DE ERRORES DE AUTENTICACIÓN/AUTORIZACIÓN
- */
-export function isAuthError(exception: unknown): boolean {
-  if (!(exception instanceof Error)) return false;
-
-  const authErrorIndicators = [
-    'Unauthorized',
-    'Forbidden',
-    'jwt',
-    'token',
-    'authentication',
-    'authorization',
-    'JsonWebToken',
-  ];
-
-  return authErrorIndicators.some(
-    (indicator) =>
-      exception.name.includes(indicator) ||
-      exception.message.toLowerCase().includes(indicator.toLowerCase()),
-  );
-}
-
-/**
- * 🔐 MANEJADOR DE ERRORES DE AUTH
- */
-export function handleAuthError(error: Error): {
-  status: number;
-  message: string;
-  errorCode: string;
-} {
-  if (error.message.includes('jwt') || error.message.includes('token')) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      message: 'Token de autenticación inválido o expirado',
-      errorCode: 'INVALID_TOKEN',
-    };
-  }
-
-  if (error.message.toLowerCase().includes('unauthorized')) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      message: 'Credenciales de acceso inválidas',
-      errorCode: 'UNAUTHORIZED',
-    };
-  }
-
-  if (error.message.toLowerCase().includes('forbidden')) {
-    return {
-      status: HttpStatus.FORBIDDEN,
-      message: 'No tienes permisos para realizar esta acción',
-      errorCode: 'FORBIDDEN',
-    };
-  }
-
-  return {
-    status: HttpStatus.UNAUTHORIZED,
-    message: 'Error de autenticación',
-    errorCode: 'AUTH_ERROR',
-  };
 }

@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -35,7 +35,7 @@ async function bootstrap() {
   // filtro global de excepciones personalizado.
   // Permite manejar errores de forma coherente en toda la API, devolviendo respuestas estructuradas.
   const httpAdapterHost = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
+  app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
 
   // para todos
   //app.enableCors({});

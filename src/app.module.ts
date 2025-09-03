@@ -14,7 +14,6 @@ import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { MailModule } from './common/mail/mail.module';
-import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -47,7 +46,6 @@ import { CommonModule } from './common/common.module';
     TerminusModule,
     HealthModule,
     MailModule,
-    CommonModule,
   ],
   controllers: [],
   providers: [],
