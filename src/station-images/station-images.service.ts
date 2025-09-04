@@ -21,6 +21,8 @@ import {
 } from 'cloudinary';
 import { uploadToCloudinary } from 'src/common/utils/uploadToCloudinary';
 
+import * as sharp from 'sharp';
+
 @Injectable()
 export class StationImagesService {
   private cloudinary: typeof CloudinaryV2;
@@ -218,8 +220,16 @@ export class StationImagesService {
     const { description, fuelStationId } = createStationImageDto;
     const fuelStation = await this.findFuelStationOrThrow(fuelStationId);
 
+    // 1️⃣ Procesar la imagen con Sharp antes de subir
+    const optimizedImageBuffer = await sharp(imageFile.buffer)
+      .resize({ width: 800 }) // redimensionar ancho máx. 800px
+      .jpeg({ quality: 75 }) // comprimir JPEG
+      .toBuffer();
+
+    // 2️⃣ Subir a Cloudinary
     const uploadResult: UploadApiResponse = await uploadToCloudinary(
-      imageFile.buffer,
+      // imageFile.buffer,
+      optimizedImageBuffer,
       'station-images',
     );
 
@@ -255,8 +265,41 @@ export class StationImagesService {
     }
 
     if (imageFile) {
+      // 1️⃣ Eliminar la imagen anterior de Cloudinary
+      if (stationImage.imageUrl) {
+        const publicId = stationImage.imageUrl
+          .split('/')
+          .slice(-2)
+          .join('/')
+          .split('.')[0];
+
+        try {
+          await this.cloudinary.uploader.destroy(publicId);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(
+              'Error deleting old image from Cloudinary:',
+              error.message,
+            );
+          } else {
+            console.error(
+              'Unknown error deleting old image from Cloudinary:',
+              error,
+            );
+          }
+        }
+      }
+
+      // 2️⃣ Optimizar la nueva imagen con Sharp
+      const optimizedImageBuffer = await sharp(imageFile.buffer)
+        .resize({ width: 800 })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+
+      // 3️⃣ Subir a Cloudinary
       const uploadResult: UploadApiResponse = await uploadToCloudinary(
-        imageFile.buffer,
+        // imageFile.buffer,
+        optimizedImageBuffer,
         'station-images',
       );
 
