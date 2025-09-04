@@ -5,7 +5,7 @@ import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Role } from '../src/roles/entities/role.entity';
 import { User } from '../src/users/entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 // Pruebas e2e para autorización basada en roles: se verifica acceso permitido/denegado según rol.
 describe('Authorization (Admin) (e2e)', () => {
@@ -16,6 +16,9 @@ describe('Authorization (Admin) (e2e)', () => {
   let adminUserId: number;
   let userToken: string;
   let normalUserId: number;
+  let dataSource: DataSource;
+  let adminRole: Role | null;
+  let userRole: Role | null;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,6 +28,7 @@ describe('Authorization (Admin) (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe()); // Habilitar validaciones globales
     await app.init();
+    dataSource = moduleFixture.get(DataSource);
 
     userRepo = moduleFixture.get(getRepositoryToken(User));
     roleRepo = moduleFixture.get(getRepositoryToken(Role));
@@ -34,27 +38,43 @@ describe('Authorization (Admin) (e2e)', () => {
     await roleRepo.query('TRUNCATE TABLE roles RESTART IDENTITY CASCADE');
 
     // Crear roles
-    let userRole = await roleRepo.findOneBy({ roleName: 'user' });
-    if (!userRole) {
-      await roleRepo.save({
-        roleName: 'user',
-        description: 'Rol de usuario regular',
+    const queryRunner = dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      userRole = await queryRunner.manager.findOne(Role, {
+        where: { roleName: 'user' },
       });
-      userRole = await roleRepo.findOneBy({ roleName: 'user' });
-    }
-    if (!userRole) {
-      throw new Error('No se pudo crear ni encontrar el rol user');
-    }
-    let adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
-    if (!adminRole) {
-      await roleRepo.save({
-        roleName: 'admin',
-        description: 'Rol de administrador',
+      if (!userRole) {
+        userRole = await queryRunner.manager.save(Role, {
+          roleName: 'user',
+          description: 'Rol de usuario regular',
+        });
+      }
+
+      adminRole = await queryRunner.manager.findOne(Role, {
+        where: { roleName: 'admin' },
       });
-      adminRole = await roleRepo.findOneBy({ roleName: 'admin' });
-    }
-    if (!adminRole) {
-      throw new Error('No se pudo crear ni encontrar el rol admin');
+      if (!adminRole) {
+        adminRole = await queryRunner.manager.save(Role, {
+          roleName: 'admin',
+          description: 'Rol de administrador',
+        });
+      }
+
+      // Confirmar que los roles fueron creados correctamente
+      if (!userRole || !adminRole) {
+        throw new Error('No se pudieron crear los roles necesarios');
+      }
+
+      // Commit de la transacción
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      // Si ocurre un error, revertimos la transacción
+      await queryRunner.rollbackTransaction();
+      throw error; // Re-lanzamos el error para que se registre
+    } finally {
+      // Liberamos el query runner
+      await queryRunner.release();
     }
 
     // Función auxiliar para registrar y loguear usuarios
@@ -90,9 +110,11 @@ describe('Authorization (Admin) (e2e)', () => {
     adminToken = adminTokenResult;
     adminUserId = adminUserIdResult;
 
+    const userEmail = `user_${Date.now()}_${Math.random()}@example.com`;
+
     const userData = {
       name: 'Normal User',
-      email: 'user@example.com',
+      email: userEmail,
       password: 'userpass',
       phone: '222222222',
     };

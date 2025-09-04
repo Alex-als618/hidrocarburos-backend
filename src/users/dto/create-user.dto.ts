@@ -58,6 +58,7 @@ export class CreateUserDto {
   password: string;
 
   @ApiHideProperty()
+  @IsOptional()
   refreshToken?: string;
 
   @ApiPropertyOptional({
