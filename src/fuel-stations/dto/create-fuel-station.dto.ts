@@ -1,18 +1,24 @@
-//import { IsNumber, IsString } from "class-validator";
+import { IsString, IsNumber, IsInt, Min, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateFuelStationDto {
-  /*@IsString()
-    name: string;
+  @IsString()
+  @MaxLength(100)
+  @Transform(({ value }) => value.trim())
+  stationName: string;
 
-    @IsString()
-    municipality: string;
+  @IsString()
+  @MaxLength(255)
+  @Transform(({ value }) => value.trim())
+  address: string;
 
-    @IsString()
-    address: string;
+  @IsNumber()
+  latitude: number;
 
-    @IsNumber()
-    gpsLatitude: number;
+  @IsNumber()
+  longitude: number;
 
-    @IsNumber()
-    gpsLongitude: number;*/
+  @IsInt()
+  @Min(1)
+  idMunicipality: number;
 }

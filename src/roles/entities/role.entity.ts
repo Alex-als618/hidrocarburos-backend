@@ -18,8 +18,8 @@ export class Role {
   @Column({ name: 'role_name', type: 'varchar', length: 50, unique: true })
   roleName: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  description: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description?: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
@@ -27,6 +27,6 @@ export class Role {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @OneToMany(() => User, (user) => user.role)
+  @OneToMany(() => User, (user) => user.role, { onDelete: 'CASCADE' })
   users: User[];
 }

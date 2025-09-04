@@ -4,6 +4,7 @@ import { join } from 'path';
 
 //quitar el example del env
 //ignorar el docker-compose.yml si usa postgres local
+// cambiar todo lo que use el AppDataSource de data-source.ts por el typeormConfig
 export const typeormConfig = (
   configService: ConfigService,
 ): DataSourceOptions => ({

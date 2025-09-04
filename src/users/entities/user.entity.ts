@@ -31,13 +31,27 @@ export class User {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'refresh_token',
+  })
+  refreshToken?: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @ManyToOne(() => Role, (role) => role.users)
+  @Column({ nullable: true })
+  resetToken: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  tokenExpiration: Date;
+
+  @ManyToOne(() => Role, (role) => role.users, { eager: true })
   @JoinColumn({ name: 'id_role' })
   role: Role;
 

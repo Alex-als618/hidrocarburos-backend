@@ -1,12 +1,19 @@
-//import { IsNumber } from "class-validator";
+import { IsNumber, IsPositive, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateFuelAvailabilityDto {
-  /*@IsNumber()
-    availableQuantity: number;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsPositive()
+  @Type(() => Number)
+  availableQuantity: number;
 
-    @IsNumber()
-    idFuelStation: number;
-    
-    @IsNumber()
-    idFuelType: number;*/
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  idFuelStation: number;
+
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  idFuelType: number;
 }
