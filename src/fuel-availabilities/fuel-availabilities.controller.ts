@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { FuelAvailabilitiesService } from './fuel-availabilities.service';
 import { CreateFuelAvailabilityDto } from './dto/create-fuel-availability.dto';
@@ -22,9 +23,15 @@ export class FuelAvailabilitiesController {
     return this.fuelAvailabilitiesService.create(createFuelAvailabilityDto);
   }
 
+  // Paginación
   @Get()
-  findAll() {
-    return this.fuelAvailabilitiesService.findAll();
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    return this.fuelAvailabilitiesService.findAllPaginated(
+      pageNumber,
+      limitNumber,
+    );
   }
 
   @Get(':id')

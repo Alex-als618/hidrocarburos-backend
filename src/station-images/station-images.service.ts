@@ -163,4 +163,20 @@ export class StationImagesService {
       fs.unlinkSync(imagePath);
     }
   }
+
+  // Paginación
+  async findAllPaginated(page: number, limit: number) {
+    const [data, total] = await this.stationImageRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['fuelStation'],
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
 }

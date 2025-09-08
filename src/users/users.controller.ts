@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -53,8 +54,11 @@ export class UsersController {
     isArray: true,
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
-  findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  async getAllUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    return this.usersService.findAllPaginated(pageNumber, limitNumber);
   }
 
   @Get(':id')

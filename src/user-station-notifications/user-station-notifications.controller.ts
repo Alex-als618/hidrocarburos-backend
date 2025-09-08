@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UserStationNotificationsService } from './user-station-notifications.service';
 import { CreateUserStationNotificationDto } from './dto/create-user-station-notification.dto';
@@ -26,9 +27,15 @@ export class UserStationNotificationsController {
     );
   }
 
+  // Paginación
   @Get()
-  findAll() {
-    return this.userStationNotificationsService.findAll();
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    return this.userStationNotificationsService.findAllPaginated(
+      pageNumber,
+      limitNumber,
+    );
   }
 
   @Get(':id')

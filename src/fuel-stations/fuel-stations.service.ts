@@ -49,4 +49,19 @@ export class FuelStationsService {
     }
     return { message: `FuelStation #${id} deleted` };
   }
+
+  async findAllPaginated(page: number, limit: number) {
+    const [data, total] = await this.stationRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['fuelAvailabilities', 'stationImages'],
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
 }

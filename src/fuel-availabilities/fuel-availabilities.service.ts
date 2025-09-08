@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { FuelAvailability } from './entities/fuel-availability.entity';
 import { CreateFuelAvailabilityDto } from './dto/create-fuel-availability.dto';
 import { UpdateFuelAvailabilityDto } from './dto/update-fuel-availability.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FuelAvailability } from './entities/fuel-availability.entity';
-import { Repository } from 'typeorm';
 import { FuelAlertGateway } from 'src/notifications/gateways/fuel-alert.gateway';
 
 @Injectable()
@@ -27,10 +27,16 @@ export class FuelAvailabilitiesService {
   }
 
   async findOne(id: number) {
-    return await this.fuelAvailabilityRepository.findOne({
+    const availability = await this.fuelAvailabilityRepository.findOne({
       where: { idFuelAvailability: id },
       relations: ['fuelStation', 'fuelType'],
     });
+
+    if (!availability) {
+      throw new NotFoundException(`FuelAvailability #${id} not found`);
+    }
+
+    return availability;
   }
 
   async update(id: number, dto: UpdateFuelAvailabilityDto) {
@@ -62,5 +68,21 @@ export class FuelAvailabilitiesService {
       return { message: 'Eliminado correctamente' };
     }
     return { message: 'No encontrado' };
+  }
+
+  // paginación
+  async findAllPaginated(page: number, limit: number) {
+    const [data, total] = await this.fuelAvailabilityRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['fuelStation', 'fuelType'],
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
   }
 }

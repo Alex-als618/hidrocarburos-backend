@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserStationNotification } from './entities/user-station-notification.entity';
@@ -24,18 +24,43 @@ export class UserStationNotificationsService {
   }
 
   async findOne(id: number) {
-    return await this.userStationNotificationRepository.findOne({
+    const notification = await this.userStationNotificationRepository.findOne({
       where: { idUserStationNotification: id },
       relations: ['user', 'fuelStation'],
     });
+
+    if (!notification) {
+      throw new NotFoundException(`UserStationNotification #${id} not found`);
+    }
+
+    return notification;
   }
 
   async update(id: number, dto: UpdateUserStationNotificationDto) {
     await this.userStationNotificationRepository.update(id, dto);
-    return await this.findOne(id);
+    return this.findOne(id);
   }
 
   async remove(id: number) {
-    return await this.userStationNotificationRepository.delete(id);
+    const notification = await this.findOne(id);
+    await this.userStationNotificationRepository.remove(notification);
+    return { message: 'Eliminado correctamente' };
+  }
+
+  // Paginación
+  async findAllPaginated(page: number, limit: number) {
+    const [data, total] =
+      await this.userStationNotificationRepository.findAndCount({
+        skip: (page - 1) * limit,
+        take: limit,
+        relations: ['user', 'fuelStation'],
+      });
+
+    return {
+      data,
+      total,
+      page,
+      pageCount: Math.ceil(total / limit),
+    };
   }
 }
