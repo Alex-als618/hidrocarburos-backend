@@ -39,7 +39,7 @@ async function bootstrap() {
 
   // para todos
   //app.enableCors({});
-
+  app.enableCors();
   //para origin en especifico
   // app.enableCors({
   //   origin: ['http://localhost:4200', 'https://tudominio.com'], // permite solo estos orígenes
